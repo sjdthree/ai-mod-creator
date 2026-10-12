@@ -264,6 +264,9 @@
 
 <script>
 /* ---------- non-modal notifications (NEVER use native alert/confirm — they freeze the webview) ---------- */
+// Escape text for HTML templates. Creation and project names come from the model or a project file,
+// so they are never trusted markup.
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg, kind, ms){
   const box = document.getElementById("toasts"); if (!box) return;
   const el = document.createElement("div");
@@ -406,7 +409,7 @@ function renderPipe(states, name){
   $("#pipe").innerHTML = STAGES.map(([k])=>{
     const s = states[k] || "idle";
     const mark = s==="done"?"✓": s==="fail"?"✕": "";
-    return `<div class="step" data-s="${s}"><span class="dot">${mark}</span><span class="lbl">${stageLabel(k,name)}</span><span class="sub">${s==="active"?"working…":""}</span></div>`;
+    return `<div class="step" data-s="${s}"><span class="dot">${mark}</span><span class="lbl">${esc(stageLabel(k,name))}</span><span class="sub">${s==="active"?"working…":""}</span></div>`;
   }).join("");
 }
 const NEW_PROJECT = "__new__";
@@ -416,7 +419,7 @@ async function loadProjects(select){
   if (select && projects.includes(select)) current.project = select;
   else if (!projects.includes(current.project)) current.project = projects[0];
   const sel = $("#proj");
-  sel.innerHTML = projects.map(p=>`<option ${p===current.project?"selected":""}>${p}</option>`).join("")
+  sel.innerHTML = projects.map(p=>`<option ${p===current.project?"selected":""}>${esc(p)}</option>`).join("")
     + `<option value="${NEW_PROJECT}">+ New project…</option>`;
   clearRefine();
   await refreshItems();
@@ -443,9 +446,9 @@ async function refreshItems(){
   if (current.refine && !ITEMS.some(i=>i.name===current.refine)) clearRefine();
   if (!ITEMS.length){ list.innerHTML = `<div class="empty">No creations yet.<br>Describe one above.</div>`; }
   else list.innerHTML = ITEMS.map((it,i)=>`
-    <div class="card ${current.refine===it.name?"selected":""}" data-name="${it.name}" title="Click to refine">
+    <div class="card ${current.refine===it.name?"selected":""}" data-name="${esc(it.name)}" title="Click to refine">
       <canvas width="16" height="16" data-i="${i}"></canvas>
-      <div><div class="nm">${it.name}</div><div class="ty">${it.type}</div></div>
+      <div><div class="nm">${esc(it.name)}</div><div class="ty">${esc(it.type)}</div></div>
       <button class="undo" data-undo="1" title="Undo last change">↶ undo</button>
     </div>`).join("");
   list.querySelectorAll("canvas[data-i]").forEach(cv=>{ const it=ITEMS[+cv.dataset.i]; drawIcon(cv, kindOf(it.type), seedOf(it.name)); });
@@ -863,7 +866,7 @@ function offerLaunch(prefix){
   const profile = L === "Fabric" ? "fabric-loader 1.21.1" : "NeoForge 1.21.1";
   const box = document.getElementById("toasts"); if (!box) return;
   const el = document.createElement("div"); el.className = "toast";
-  el.innerHTML = (prefix ? `<b>${prefix}</b><br>` : "") +
+  el.innerHTML = (prefix ? `<b>${esc(prefix)}</b><br>` : "") +
     `Run your Minecraft loader — or click here to open it. Pick the <b>${profile}</b> profile and hit Play.<br>`;
   const btn = document.createElement("button"); btn.className = "chip"; btn.style.marginTop = "8px"; btn.textContent = "▶ Open Minecraft";
   el.appendChild(btn); box.appendChild(el);

@@ -616,7 +616,8 @@ fn install_neoforge_blocking() -> Result<Value, String> {
         "https://maven.neoforged.net/releases/net/neoforged/neoforge/{V}/neoforge-{V}-installer.jar",
         V = NEOFORGE_VERSION
     );
-    let jar = std::env::temp_dir().join(format!("neoforge-{NEOFORGE_VERSION}-installer.jar"));
+    let dl_dir = private_download_dir()?;
+    let jar = dl_dir.join(format!("neoforge-{NEOFORGE_VERSION}-installer.jar"));
     // curl ships on macOS, Windows 10+, and Linux — avoids pulling an HTTP stack into the app.
     let dl = hide_console(
         Command::new("curl")
@@ -646,6 +647,7 @@ fn install_neoforge_blocking() -> Result<Value, String> {
     )
     .output()
     .map_err(|e| format!("couldn't run the installer (Java 21 required): {e}"))?;
+    let _ = std::fs::remove_dir_all(&dl_dir);
     if !out.status.success() {
         let err = String::from_utf8_lossy(&out.stderr);
         let last = err.trim().lines().last().unwrap_or("unknown error");
@@ -707,6 +709,27 @@ fn java_bin() -> String {
         .unwrap_or_else(|| "java".into())
 }
 
+/// A fresh directory only this user can write, for a downloaded installer we are about to run. A
+/// fixed path in the shared temp dir could be pre-created or swapped by another local user between
+/// the download and `java -jar`; `create_dir` fails if the name already exists, and it is 0700 on Unix.
+fn private_download_dir() -> Result<PathBuf, String> {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let dir = std::env::temp_dir().join(format!("mce-dl-{}-{nanos}", std::process::id()));
+    let mut builder = std::fs::DirBuilder::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder
+        .create(&dir)
+        .map_err(|e| format!("couldn't create a download folder: {e}"))?;
+    Ok(dir)
+}
+
 /// Download `url` to `dest` with curl (ships on macOS/Win10+/Linux). Returns a friendly error on failure.
 fn curl_download(url: &str, dest: &Path, what: &str) -> Result<(), String> {
     let ok = hide_console(
@@ -762,7 +785,8 @@ fn install_fabric_blocking() -> Result<Value, String> {
             "https://maven.fabricmc.net/net/fabricmc/fabric-installer/{V}/fabric-installer-{V}.jar",
             V = FABRIC_INSTALLER_VERSION
         );
-        let jar = std::env::temp_dir().join(format!("fabric-installer-{FABRIC_INSTALLER_VERSION}.jar"));
+        let dl_dir = private_download_dir()?;
+        let jar = dl_dir.join(format!("fabric-installer-{FABRIC_INSTALLER_VERSION}.jar"));
         curl_download(&url, &jar, "the Fabric installer")?;
         let out = hide_console(
             Command::new(&java)
@@ -774,6 +798,7 @@ fn install_fabric_blocking() -> Result<Value, String> {
         )
         .output()
         .map_err(|e| format!("couldn't run the Fabric installer (Java 21 required): {e}"))?;
+        let _ = std::fs::remove_dir_all(&dl_dir);
         if !out.status.success() {
             let err = String::from_utf8_lossy(&out.stderr);
             let last = err.trim().lines().last().unwrap_or("unknown error");
@@ -1091,4 +1116,25 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Mod Creation Engine");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn private_download_dir_is_fresh_and_owner_only() {
+        let a = private_download_dir().unwrap();
+        let b = private_download_dir().unwrap();
+        assert_ne!(a, b);
+        assert!(a.is_dir() && b.is_dir());
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(&a).unwrap().permissions().mode();
+            assert_eq!(mode & 0o777, 0o700);
+        }
+        let _ = std::fs::remove_dir_all(a);
+        let _ = std::fs::remove_dir_all(b);
+    }
 }
