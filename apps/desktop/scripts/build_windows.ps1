@@ -12,7 +12,7 @@
 #   - Rust:      https://rustup.rs   (installs the x86_64-pc-windows-msvc target by default)
 #   - Tauri CLI: cargo install tauri-cli --version "^2.0" --locked
 #   - Git, and WebView2 Runtime (preinstalled on Windows 11)
-#   - Nothing else — the model runs with NO Python.
+#   - Nothing else - the model runs with NO Python.
 # END USERS of the installer additionally need JDK 21 (Temurin) for the Gradle build step.
 
 $ErrorActionPreference = "Stop"
@@ -27,12 +27,12 @@ $resModels = Join-Path $tauri "resources\models"
 $resLic    = Join-Path $tauri "resources\licenses"
 New-Item -ItemType Directory -Force -Path $binaries,$resModels,$resLic | Out-Null
 
-# 1) engine — mce.exe
+# 1) engine - mce.exe
 Write-Host "== [1/5] building mce.exe =="
 cargo build --release -p mce-cli --manifest-path (Join-Path $repo "Cargo.toml")
 Copy-Item (Join-Path $repo "target\release\mce.exe") (Join-Path $binaries "mce-$triple.exe") -Force
 
-# 2) model runtime — a STATIC llama-server.exe (single self-contained exe, static CRT)
+# 2) model runtime - a STATIC llama-server.exe (single self-contained exe, static CRT)
 Write-Host "== [2/5] building static llama-server.exe =="
 $llamaSrc = Join-Path $env:TEMP "llama.cpp"
 if (-not (Test-Path $llamaSrc)) { git clone --depth 1 https://github.com/ggml-org/llama.cpp $llamaSrc }
@@ -46,7 +46,7 @@ Pop-Location
 $llamaExe = Get-ChildItem -Path (Join-Path $llamaSrc "build") -Recurse -Filter "llama-server.exe" | Select-Object -First 1
 Copy-Item $llamaExe.FullName (Join-Path $binaries "llama-server-$triple.exe") -Force
 
-# 3) the model pinned in model.lock, from Hugging Face — mce-model.json (sha256-pinned by model.lock) +
+# 3) the model pinned in model.lock, from Hugging Face - mce-model.json (sha256-pinned by model.lock) +
 #    the GGUF it names, then verified against this engine (contract/grammar pins + weights sha256).
 #    While the Hugging Face repo is private, set $env:HF_TOKEN.
 Write-Host "== [3/5] fetching + verifying the model =="
