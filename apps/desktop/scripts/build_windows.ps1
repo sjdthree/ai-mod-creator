@@ -1,4 +1,4 @@
-# Build the Windows installer for the Mod Creation Engine desktop app.
+# Build the Windows installer for the AI-mod creator desktop app.
 #
 # Produces a self-contained .msi + .exe installer (no Python) under
 #   apps/desktop/src-tauri/target/release/bundle/{msi,nsis}

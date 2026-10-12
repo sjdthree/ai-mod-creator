@@ -39,7 +39,7 @@ const DEFAULT_INTENT_MODEL: &str = "default_model";
 #[command(
     name = "mce",
     version,
-    about = "Mod Creation Engine — build Minecraft mods from plain English."
+    about = "AI-mod creator engine — build Minecraft mods from plain English."
 )]
 struct Cli {
     /// Emit machine-readable JSON instead of human-readable text.

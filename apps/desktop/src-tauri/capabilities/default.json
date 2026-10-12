@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capabilities for the Mod Creation Engine desktop app: core IPC (so the frontend can call our commands) plus the native folder picker used to locate the Minecraft mods folder.",
+  "description": "Capabilities for the AI-mod creator desktop app: core IPC (so the frontend can call our commands) plus the native folder picker used to locate the Minecraft mods folder.",
   "windows": ["main"],
   "permissions": ["core:default", "dialog:default"]
 }
