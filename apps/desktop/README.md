@@ -1,4 +1,4 @@
-# Mod Creation Engine — desktop app
+# AI-mod creator — desktop app
 
 A Tauri desktop app: the web UI in `ui/` wrapped by a small Rust shell in `src-tauri/` that drives
 the `mce` engine. The same `ui/index.html` also runs standalone in a browser (demo mode) — open it
@@ -69,8 +69,8 @@ That one script: builds `mce.exe`, builds a **static** `llama-server.exe`, fetch
 `mce model verify`, stages the
 grammar + license notices, and runs `cargo tauri build`. Output:
 ```
-apps\desktop\src-tauri\target\release\bundle\msi\    → Mod Creation Engine_x.y.z_x64_en-US.msi
-apps\desktop\src-tauri\target\release\bundle\nsis\   → Mod Creation Engine_x.y.z_x64-setup.exe
+apps\desktop\src-tauri\target\release\bundle\msi\    → AI-mod creator_x.y.z_x64_en-US.msi
+apps\desktop\src-tauri\target\release\bundle\nsis\   → AI-mod creator_x.y.z_x64-setup.exe
 ```
 The resulting installer is self-contained (engine + model runtime + model), **no Python**. End users of
 the installed app still need **JDK 21** (Temurin) for the Gradle build step.
@@ -86,7 +86,7 @@ MCE_LLAMA_SERVER=/path/to/llama-server apps/desktop/scripts/stage_bundle.sh
 
 # 2) bundle
 cd apps/desktop/src-tauri
-cargo tauri build --bundles app     # → target/release/bundle/macos/Mod Creation Engine.app (~300 MB)
+cargo tauri build --bundles app     # → target/release/bundle/macos/AI-mod creator.app (~300 MB)
 # (use `--bundles dmg` or omit for a .dmg; .msi on Windows; .deb/.AppImage on Linux)
 ```
 The `.app` carries its own `mce` engine + `llama-server` (sidecars in `Contents/MacOS/`) and the GGUF
