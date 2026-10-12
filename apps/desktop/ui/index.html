@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mod Creation Engine</title>
+<title>AI-mod creator</title>
 <style>
   :root {
     --ground: #14161b; --panel: #1a1d24; --panel-2: #20242d; --edge: #2b313c;
@@ -509,7 +509,7 @@ async function doUndo(e){
   $("#enginestat").textContent = "undoing last change…";
   await engine.undo(current.project);
   await refreshItems();
-  $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)";
+  $("#enginestat").textContent = inTauri ? "AI model ready" : "demo mode (no engine)";
 }
 const STAGE_KEYS = STAGES.map(s=>s[0]);
 function showBanner(icon, iconSeed, title, desc, badgeText, badgeClass){
@@ -569,7 +569,7 @@ async function handleResult(states, res, prov){
   const running = STAGE_KEYS.find(k=>states[k]==="active");
   if (running){ states[running] = soft ? "idle" : "fail"; renderPipe(states, prov.name); }
   setRunHeadTitle("gem", 200, soft ? `Let's tweak “${prov.name}”` : `Couldn't finish ${prov.name}`);
-  // The MCE Model is small and occasionally misreads a request; a plain retry often just works. Every
+  // The AI model is small and occasionally misreads a request; a plain retry often just works. Every
   // failure message therefore ends with the concrete next step, and a "Try again" button re-runs it.
   const SUPPORTED = "items, tools, weapons, food, and blocks";
   // Engine validation errors arrive as OBJECTS ({code, message, …}). Joining them directly printed
@@ -584,7 +584,7 @@ async function handleResult(states, res, prov){
     needs_clarification: ["I didn't quite catch that",
       `I couldn't turn “${prov.name}” into a creation. Give it a Capitalized name and a number or two — e.g. “a ruby sword called Sting with 9 attack damage” — or just tap Try again.`],
     unsupported: ["That's not supported yet",
-      `Right now MCE can make ${SUPPORTED} — but not ${res.reason && /entit|mob/i.test(res.reason) ? "mobs or entities" : "that"} yet. Try one of the supported kinds instead.`],
+      `Right now AI-mod creator can make ${SUPPORTED} — but not ${res.reason && /entit|mob/i.test(res.reason) ? "mobs or entities" : "that"} yet. Try one of the supported kinds instead.`],
     no_op: ["Nothing to change",
       `That request doesn't change anything in “${current.project}”. Describe what you'd like different — e.g. “make ${prov.name} do 12 damage”.`],
     rejected: isDup
@@ -595,12 +595,12 @@ async function handleResult(states, res, prov){
     build_failed: [`“${prov.name}” didn't compile`,
       "The generated mod failed to build — this is on us, not you. Tap Try again; if it keeps happening, the details below help us fix it."],
     verification_failed: [`“${prov.name}” didn't pass its in-game test`,
-      `It built, but the automatic in-game check didn't confirm it — so nothing was saved and your last version is untouched. The MCE Model sometimes has an off run; Try again usually fixes it.`],
+      `It built, but the automatic in-game check didn't confirm it — so nothing was saved and your last version is untouched. The AI model sometimes has an off run; Try again usually fixes it.`],
   };
   // Translate raw model/plumbing errors ("no valid operations array", etc.) into something human.
   let [title, desc] = messages[res.status] || (
     /operation|intent|model output|parse|json/i.test(res.message||"")
-      ? ["The MCE Model had trouble with that", `It couldn't read that into a clean creation. Try rephrasing more simply, or tap Try again — it's often a one-off.`]
+      ? ["The AI model had trouble with that", `It couldn't read that into a clean creation. Try rephrasing more simply, or tap Try again — it's often a one-off.`]
       : ["Something went wrong", res.message || String(res.status||"unknown")]
   );
   showBanner("gem", 200, title, desc, soft ? "needs detail" : "not saved", soft ? "warn" : "bad");
@@ -629,7 +629,7 @@ async function handleResult(states, res, prov){
   // Offer concrete close alternatives the engine CAN make — so a dead end becomes a pick-one-of-these.
   renderSuggestions(current.lastText || prov.name, res.status);
 }
-// The kinds MCE can actually build, and the words we strip to find the "theme" (material/adjective).
+// The kinds AI-mod creator can actually build, and the words we strip to find the "theme" (material/adjective).
 const MAKEABLE = ["sword","pickaxe","axe","shovel","hoe","block"];
 const KNOWN_NOUNS = ["sword","dagger","knife","pickaxe","axe","shovel","hoe","block","wand","staff",
   "mace","hammer","spear","bow","helmet","chestplate","leggings","boots","armor","shield","ring",
@@ -734,7 +734,7 @@ async function doCreate(){
     setRunHead("gem", 200, `Couldn't make ${prov.name}`, `“${text}”`);
     const msg = (e && (e.message||e)) + "";
     const stuck = /taking unusually long/.test(msg);
-    setEngineStat(inTauri ? "MCE Model ready" : "demo mode (no engine)", inTauri);
+    setEngineStat(inTauri ? "AI model ready" : "demo mode (no engine)", inTauri);
     showBanner("gem", 200, stuck ? "That took too long" : "The engine hit a snag",
       stuck ? msg : "Something interrupted the build — often the toolchain still warming up. Tap ↻ Try again; details below if it persists.", "error", "bad");
     $("#faildetail").textContent = msg;
@@ -792,7 +792,7 @@ async function doPlay(){
   } finally {
     clearInterval(ticker);
     playing = false;
-    setTimeout(()=>{ $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)"; }, 6000);
+    setTimeout(()=>{ $("#enginestat").textContent = inTauri ? "AI model ready" : "demo mode (no engine)"; }, 6000);
   }
 }
 const MODS_KEY = "mce.modsDir";
@@ -804,7 +804,7 @@ async function chooseModsFolder(force){
     else {
       $("#enginestat").textContent = "choose your Minecraft mods folder…";
       dir = await engine.pickModsFolder();   // native folder picker
-      $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)";
+      $("#enginestat").textContent = inTauri ? "AI model ready" : "demo mode (no engine)";
       if (!dir) return null;
     }
     localStorage.setItem(MODS_KEY, dir);
@@ -854,7 +854,7 @@ async function showSetupLoader(){
       offerLaunch("✓ " + (res.detail || `${L} 1.21.1 is set up.`));
     }
     catch(e){ toast(`Couldn't set it up automatically: ${e}\nUse ▶ Quick Test to play now, or install ${L} for Minecraft 1.21.1 manually.`, "bad", 12000); }
-    $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)";
+    $("#enginestat").textContent = inTauri ? "AI model ready" : "demo mode (no engine)";
     el.remove();
   };
   setTimeout(()=>el.remove(), 20000);
@@ -902,18 +902,18 @@ let modelReady = !inTauri;         // demo mode is always "ready"
 function setEngineStat(txt, on){ $("#enginestat").textContent = txt; $("#pulse").classList.toggle("off", !on); }
 async function bootModel(){
   if (!inTauri){ setEngineStat("demo mode (no engine)", false); return; }
-  setEngineStat("starting the MCE Model…", false);
+  setEngineStat("starting the AI model…", false);
   let r; try { r = await engine.startModel(); } catch(e){ r = {state:"unavailable", detail:String(e)}; }
-  if (r && r.state === "unavailable"){ modelReady = false; setEngineStat("MCE Model unavailable — see setup", false); return; }
+  if (r && r.state === "unavailable"){ modelReady = false; setEngineStat("AI model unavailable — see setup", false); return; }
   // poll until it finishes loading (first load is a few seconds). modelStatus is an IPC call and can
   // reject transiently — swallow it so bootModel never throws (a throw would propagate out of
   // ensureModelReady and wedge doCreate with busy still held).
   for (let i=0; i<40; i++){
     let up = false; try { up = await engine.modelStatus(); } catch(e){ up = false; }
-    if (up){ modelReady = true; setEngineStat("MCE Model ready", true); return; }
+    if (up){ modelReady = true; setEngineStat("AI model ready", true); return; }
     await sleep(1500);
   }
-  modelReady = false; setEngineStat("MCE Model didn't start — check setup", false);
+  modelReady = false; setEngineStat("AI model didn't start — check setup", false);
 }
 // Make sure the model is up before a request; retries the boot if it stalled.
 async function ensureModelReady(){

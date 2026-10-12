@@ -1,7 +1,7 @@
 [package]
 name = "mce-desktop"
 version = "0.3.0"
-description = "Mod Creation Engine desktop app"
+description = "AI-mod creator desktop app"
 edition = "2021"
 rust-version = "1.80"
 license = "Apache-2.0"

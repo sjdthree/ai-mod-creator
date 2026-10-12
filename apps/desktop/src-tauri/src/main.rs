@@ -1,4 +1,4 @@
-// Mod Creation Engine — desktop app backend.
+// AI-mod creator — desktop app backend.
 //
 // A thin Tauri shell over the `mce` engine: each command shells out to the `mce` CLI with `--json`
 // (so the app and the CLI can never drift), runs the heavy pipeline off the UI thread, and points
@@ -39,7 +39,8 @@ fn minecraft_mods_default() -> PathBuf {
     }
 }
 
-/// Where the app keeps projects: `$MCE_PROJECTS_DIR`, else `~/ModCreationEngine`. Having one stable
+/// Where the app keeps projects: `$MCE_PROJECTS_DIR`, else `~/ai-mod-creator` (moved from the
+/// pre-rename `~/ModCreationEngine` on first run). Having one stable
 /// home means a project name always resolves the same way regardless of the app's working directory
 /// (the bug this fixes: bare `--project name` was resolved against the app bundle's CWD).
 fn projects_root() -> PathBuf {
@@ -49,7 +50,14 @@ fn projects_root() -> PathBuf {
     let home = std::env::var("HOME")
         .or_else(|_| std::env::var("USERPROFILE"))
         .unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join("ModCreationEngine")
+    let home = PathBuf::from(home);
+    let root = home.join("ai-mod-creator");
+    let legacy = home.join("ModCreationEngine");
+    // One-time move of the pre-rename folder; if the move fails, keep using it where it is.
+    if !root.exists() && legacy.is_dir() && std::fs::rename(&legacy, &root).is_err() {
+        return legacy;
+    }
+    root
 }
 
 /// Resolve a project reference to an absolute path: a bare name → `<projects_root>/<name>`; an
@@ -298,7 +306,7 @@ fn model_compatible(dir: &Path) -> Result<(), String> {
         .or_else(|| v["message"].as_str().map(str::to_string))
         .unwrap_or_else(|| String::from_utf8_lossy(&out.stderr).trim().to_string());
     Err(format!(
-        "the installed MCE Model doesn't match this engine version ({detail})"
+        "the installed AI model doesn't match this engine version ({detail})"
     ))
 }
 
@@ -406,7 +414,7 @@ fn ensure_model() -> Value {
         _ => {
             let Some(adapter) = adapter_dir() else {
                 return json!({ "state": "unavailable",
-                    "detail": "no MCE Model found — fetch it with scripts/fetch_model.sh or set MCE_MODEL_DIR" });
+                    "detail": "no AI model found — fetch it with scripts/fetch_model.sh or set MCE_MODEL_DIR" });
             };
             let (prog, mut args) = model_server_cmd();
             args.extend([
@@ -1115,7 +1123,7 @@ fn main() {
             pick_mods_folder
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Mod Creation Engine");
+        .expect("error while running AI-mod creator");
 }
 
 #[cfg(test)]

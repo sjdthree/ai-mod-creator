@@ -1,4 +1,4 @@
-# Install the Mod Creation Engine
+# Install AI-mod creator
 
 Turn plain English into working Minecraft mods. Download, install, and create — the app ships with
 everything it needs (the AI model runs **on your machine**, no accounts, no Python).
@@ -17,13 +17,13 @@ The app builds real Minecraft mods, which needs a Java 21 development kit.
 
 ## 2. macOS (Apple Silicon)
 
-1. **Download** the `Mod.Creation.Engine_<version>_aarch64.dmg` from the
+1. **Download** the `AI-mod-creator_<version>_macOS-AppleSilicon.dmg` from the
    [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases).
-2. **Open the `.dmg`** and **drag *Mod Creation Engine* into the *Applications* folder.**
+2. **Open the `.dmg`** and **drag *AI-mod creator* into the *Applications* folder.**
 3. **First launch** (the app isn't code-signed yet, so macOS asks the first time):
    - **Right-click** the app in Applications → **Open** → **Open** in the dialog.
-   - *(Or, if macOS refuses, run once in Terminal: `xattr -cr "/Applications/Mod Creation Engine.app"` then open it.)*
-4. The app opens; the footer shows **“starting the MCE Model… → MCE Model ready”** (a few seconds the
+   - *(Or, if macOS refuses, run once in Terminal: `xattr -cr "/Applications/AI-mod creator.app"` then open it.)*
+4. The app opens; the footer shows **“starting the AI model… → AI model ready”** (a few seconds the
    first time while it loads the model).
 
 Requires an Apple-Silicon Mac (M1 or newer) and macOS 12+.
@@ -32,7 +32,7 @@ Requires an Apple-Silicon Mac (M1 or newer) and macOS 12+.
 
 ## 3. Windows 11
 
-1. **Download** the `Mod.Creation.Engine_<version>_x64-setup.exe` (recommended) — or the `.msi` — from the
+1. **Download** the `…_x64-setup.exe` installer (recommended) — or the `.msi` — from the
    [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases).
    *(No Windows build published yet? It’s produced from source on a Windows box with
    [`apps/desktop/scripts/build_windows.ps1`](../apps/desktop/scripts/build_windows.ps1), then uploaded to
@@ -43,12 +43,12 @@ Requires an Apple-Silicon Mac (M1 or newer) and macOS 12+.
    - **It isn’t code-signed yet**, so Windows **SmartScreen** shows *“Windows protected your PC / unknown
      publisher.”* This is expected for an unsigned app — click **More info**, then **Run anyway**. (A signed
      build is planned; until then this warning is normal and not a sign of a bad download.)
-3. **Launch “Mod Creation Engine”** from the Start menu. The footer shows **“starting the MCE Model… →
-   MCE Model ready”** (a few seconds the first time while it loads the model).
+3. **Launch “AI-mod creator”** from the Start menu. The footer shows **“starting the AI model… →
+   AI model ready”** (a few seconds the first time while it loads the model).
 4. The **first Quick Test** downloads the Minecraft/NeoForge files once (a few minutes); after that it’s
    about a minute.
 
-Your creations are saved in `%USERPROFILE%\ModCreationEngine\`; uninstall via *Settings → Apps*. Needs
+Your creations are saved in `%USERPROFILE%\ai-mod-creator\`; uninstall via *Settings → Apps*. Needs
 64-bit Windows 10/11 (WebView2 ships with Windows 11) and Java 21 from step 1.
 
 ---
@@ -79,7 +79,7 @@ Your creations are saved in `%USERPROFILE%\ModCreationEngine\`; uninstall via *S
 | Symptom | Fix |
 |---|---|
 | “can’t be opened — unidentified developer” | Right-click → **Open** (step 3), or `xattr -cr` the app. |
-| Footer stuck on “starting the MCE Model…” | Give it ~30s on first launch; if it says *unavailable*, reopen the app. |
+| Footer stuck on “starting the AI model…” | Give it ~30s on first launch; if it says *unavailable*, reopen the app. |
 | Create fails / “didn’t pass its test” | Tap **↻ Try again** (the small model occasionally has an off run). |
 | “Add to my Minecraft” says it won’t load | Your Minecraft isn’t 1.21.1 + NeoForge — use **Quick Test**, or let the app **set it up for you**. |
 | Build never finishes | Make sure **Java 21** (step 1) is installed. |

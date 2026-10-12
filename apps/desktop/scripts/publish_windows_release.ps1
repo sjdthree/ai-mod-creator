@@ -54,8 +54,8 @@ $exists = $true
 try { gh release view $Tag 1>$null 2>$null; if ($LASTEXITCODE -ne 0) { $exists = $false } } catch { $exists = $false }
 
 if (-not $exists) {
-  if (-not $Title) { $Title = "Mod Creation Engine $Tag" }
-  if (-not $Notes) { $Notes = "Windows installer for the Mod Creation Engine ($Tag). Not code-signed yet — Windows SmartScreen may warn: More info -> Run anyway. See docs/INSTALL.md." }
+  if (-not $Title) { $Title = "AI-mod creator $Tag" }
+  if (-not $Notes) { $Notes = "Windows installer for AI-mod creator ($Tag). Not code-signed yet — Windows SmartScreen may warn: More info -> Run anyway. See docs/INSTALL.md." }
   Write-Host "== creating release $Tag =="
   $args = @("release","create",$Tag,"--title",$Title,"--notes",$Notes)
   if ($Draft) { $args += "--draft" }

@@ -1,6 +1,6 @@
 # Getting started
 
-Mod Creation Engine (MCE) turns plain-English requests into **real, verified Minecraft mods** —
+AI-mod creator (engine name: MCE) turns plain-English requests into **real, verified Minecraft mods** —
 locally, with no coding. This guide gets you from a clone to your first working mod.
 
 There are two ways to use MCE: the **desktop app** (recommended) and the **`mce` command line**.
