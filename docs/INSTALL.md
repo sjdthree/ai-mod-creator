@@ -17,8 +17,8 @@ The app builds real Minecraft mods, which needs a Java 21 development kit.
 
 ## 2. macOS (Apple Silicon)
 
-1. **Download** `Mod Creation Engine_0.1.0_aarch64.dmg` from the
-   [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases/latest).
+1. **Download** the `Mod.Creation.Engine_<version>_aarch64.dmg` from the
+   [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases).
 2. **Open the `.dmg`** and **drag *Mod Creation Engine* into the *Applications* folder.**
 3. **First launch** (the app isn't code-signed yet, so macOS asks the first time):
    - **Right-click** the app in Applications → **Open** → **Open** in the dialog.
@@ -32,8 +32,8 @@ Requires an Apple-Silicon Mac (M1 or newer) and macOS 12+.
 
 ## 3. Windows 11
 
-1. **Download** `Mod Creation Engine_0.1.0_x64-setup.exe` (recommended) — or the `.msi` — from the
-   [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases/latest).
+1. **Download** the `Mod.Creation.Engine_<version>_x64-setup.exe` (recommended) — or the `.msi` — from the
+   [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases).
    *(No Windows build published yet? It’s produced from source on a Windows box with
    [`apps/desktop/scripts/build_windows.ps1`](../apps/desktop/scripts/build_windows.ps1), then uploaded to
    the Releases page with
