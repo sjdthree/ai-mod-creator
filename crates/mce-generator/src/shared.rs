@@ -132,7 +132,19 @@ pub(crate) fn materialize(
     target: &str,
 ) -> mce_core::Result<Generated> {
     for (rel, bytes) in files {
-        let path = output_root.join(rel);
+        // Every generated path must stay inside the project. Paths are built from state values
+        // (namespace, ids), so refuse anything that could climb out of `output_root`.
+        let rel_path = Path::new(rel);
+        if !rel_path
+            .components()
+            .all(|c| matches!(c, std::path::Component::Normal(_)))
+        {
+            return Err(mce_core::MceError::validation(
+                mce_core::Component::Generator,
+                format!("refusing to write `{rel}`: generated paths must stay inside the project"),
+            ));
+        }
+        let path = output_root.join(rel_path);
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -478,5 +490,21 @@ pub(crate) fn tool_defaults(subtype: Option<&str>) -> (f64, f64) {
         Some("shovel") => (1.5, -3.0),
         Some("hoe") => (0.0, -3.0),
         _ => (1.0, -2.8), // pickaxe
+    }
+}
+
+#[cfg(test)]
+mod path_safety_tests {
+    use super::*;
+
+    #[test]
+    fn materialize_refuses_paths_outside_the_project() {
+        let root = std::env::temp_dir().join(format!("mce-materialize-{}", std::process::id()));
+        for rel in ["../escape.json", "/abs.json", "a/../../b.json"] {
+            let files = BTreeMap::from([(rel.to_string(), b"x".to_vec())]);
+            assert!(materialize(&files, &root, "neoforge").is_err(), "{rel}");
+        }
+        assert!(!root.parent().unwrap().join("escape.json").exists());
+        let _ = std::fs::remove_dir_all(root);
     }
 }

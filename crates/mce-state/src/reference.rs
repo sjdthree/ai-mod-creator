@@ -57,6 +57,26 @@ pub enum Resolution {
     NotFound(String),
 }
 
+/// A well-formed Minecraft id: `namespace:path`, lowercase `[a-z0-9_.-]` namespace and `[a-z0-9_]`
+/// path segments separated by `/`. The path part becomes a file name in the generated mod (a recipe
+/// is named after its result), so anything else — `..`, absolute paths, backslashes — is refused.
+pub fn is_valid_minecraft_id(id: &str) -> bool {
+    let Some((ns, path)) = id.split_once(':') else {
+        return false;
+    };
+    let ns_ok = !ns.is_empty()
+        && ns
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"_.-".contains(&b));
+    let path_ok = path.split('/').all(|seg| {
+        !seg.is_empty()
+            && seg
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+    });
+    ns_ok && path_ok
+}
+
 /// Resolve `reference` against `state`.
 pub fn resolve(state: &CanonicalState, reference: &Reference) -> Resolution {
     match reference.reference_type {
@@ -64,7 +84,13 @@ pub fn resolve(state: &CanonicalState, reference: &Reference) -> Resolution {
             Some(c) if c.status == Status::Active => Resolution::Concept(c.concept_id.clone()),
             _ => Resolution::NotFound(format!("no active concept with id {}", reference.value)),
         },
-        ReferenceType::MinecraftId => Resolution::Vanilla(reference.value.clone()),
+        ReferenceType::MinecraftId if is_valid_minecraft_id(&reference.value) => {
+            Resolution::Vanilla(reference.value.clone())
+        }
+        ReferenceType::MinecraftId => Resolution::NotFound(format!(
+            "`{}` is not a valid Minecraft id (expected e.g. `minecraft:diamond`)",
+            reference.value
+        )),
         ReferenceType::NamespaceId => unique_match(
             state,
             |c| c.namespace_id == reference.value,
@@ -136,5 +162,35 @@ fn disambiguate(matches: Vec<&str>, needle: &str) -> Resolution {
             "{needle} is ambiguous — {} concepts match",
             many.len()
         )),
+    }
+}
+
+#[cfg(test)]
+mod id_tests {
+    use super::is_valid_minecraft_id;
+
+    #[test]
+    fn minecraft_ids_are_strict() {
+        for ok in [
+            "minecraft:diamond",
+            "minecraft:oak_planks",
+            "mce_world:ruby_blade",
+            "a.b-c:x/y_z",
+        ] {
+            assert!(is_valid_minecraft_id(ok), "{ok}");
+        }
+        for bad in [
+            "diamond",
+            "minecraft:",
+            ":diamond",
+            "minecraft:../../tmp/pwn",
+            "minecraft:/etc/passwd",
+            "minecraft:a//b",
+            "minecraft:a\\b",
+            "minecraft:Diamond",
+            "minecraft:a.b",
+        ] {
+            assert!(!is_valid_minecraft_id(bad), "{bad}");
+        }
     }
 }
