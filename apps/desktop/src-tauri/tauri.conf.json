@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Mod Creation Engine",
+  "productName": "AI-mod creator",
   "version": "0.3.0",
-  "identifier": "com.modcreationengine.desktop",
+  "identifier": "io.github.sjdthree.aimodcreator",
   "build": {
     "frontendDist": "../ui"
   },
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Mod Creation Engine",
+        "title": "AI-mod creator",
         "width": 1120,
         "height": 780,
         "minWidth": 860,
