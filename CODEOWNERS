@@ -1,0 +1,24 @@
+# Code owners. Solo project — @sjdthree owns everything and is the required reviewer.
+# The path entries document intended workstream ownership for when the project grows.
+
+*                       @sjdthree
+
+# core-engine
+/crates/mce-core/       @sjdthree
+/crates/mce-schema/     @sjdthree
+/crates/mce-state/      @sjdthree
+/crates/mce-validator/  @sjdthree
+/crates/mce-generator/  @sjdthree
+/crates/mce-cli/        @sjdthree
+
+# mc-integration
+/crates/mce-build/      @sjdthree
+/crates/mce-verify/     @sjdthree
+/crates/mce-launch/     @sjdthree
+
+# ai-ml
+/crates/mce-intent/     @sjdthree
+
+# qa
+/crates/mce-bench/      @sjdthree
+/benchmarks/            @sjdthree

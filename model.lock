@@ -1,0 +1,8 @@
+# The MCE model this engine ships with — released on Hugging Face, consumed by scripts/fetch_model.sh,
+# the installer staging scripts, the desktop app (model directory name), and `mce` (provenance).
+# To upgrade: release the new model on Hugging Face, then bump revision + manifest_sha256 together
+# (manifest_sha256 = sha256 of that revision's mce-model.json, which in turn pins the GGUF).
+name=ai-mod-create-270smol
+repo=sjdthree/ai-mod-create-270smol
+revision=v1.0.0
+manifest_sha256=9b97da5602925331732d4d84cc863cc871745ae58c8d0aa079f4a6fa38ed79ed

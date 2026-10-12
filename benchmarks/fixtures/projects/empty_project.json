@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1.0",
+  "document_type": "project",
+  "document_id": "project-empty",
+  "revision": 1,
+  "project": {
+    "name": "Empty Project",
+    "namespace": "mce_empty",
+    "minecraft_target": {
+      "loader": "neoforge",
+      "minecraft_version": "1.21.1",
+      "loader_version": "21.1.x",
+      "java_version": 21
+    },
+    "concept_ids": [],
+    "recipe_ids": [],
+    "behavior_ids": [],
+    "verification_requirement_ids": []
+  }
+}

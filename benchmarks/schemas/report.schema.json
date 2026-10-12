@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mce.dev/benchmarks/report.schema.json",
+  "title": "Benchmark Run Summary",
+  "description": "summary.json produced by the runner (SPEC-005 §26).",
+  "type": "object",
+  "required": ["run_id", "suite", "total_cases", "passed", "failed", "errored", "skipped"],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "suite": { "type": "string" },
+    "total_cases": { "type": "integer", "minimum": 0 },
+    "passed": { "type": "integer", "minimum": 0 },
+    "failed": { "type": "integer", "minimum": 0 },
+    "errored": { "type": "integer", "minimum": 0 },
+    "skipped": { "type": "integer", "minimum": 0 },
+    "verified_request_completion_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "report_dir": { "type": "string" }
+  }
+}

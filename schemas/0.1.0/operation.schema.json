@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mce.dev/schemas/0.1.0/operation.schema.json",
+  "title": "MCL Operation",
+  "description": "An operation emitted by the Intent Adapter (SPEC-004 §19). The core assigns the canonical operation_id; the model may propose one.",
+  "type": "object",
+  "required": ["schema_version", "operation", "payload"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "operation_id": { "type": "string" },
+    "request_id": { "type": "string" },
+    "operation": {
+      "enum": [
+        "create_concept",
+        "update_concept",
+        "delete_concept",
+        "rename_concept",
+        "add_recipe",
+        "update_recipe",
+        "remove_recipe",
+        "add_behavior",
+        "update_behavior",
+        "remove_behavior",
+        "set_appearance",
+        "test_concept",
+        "revert_change",
+        "clarify_request",
+        "unsupported_request"
+      ]
+    },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "operation": { "const": "create_concept" } },
+        "required": ["operation"]
+      },
+      "then": {
+        "properties": { "payload": { "$ref": "#/$defs/createConceptPayload" } }
+      }
+    }
+  ],
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "required": ["reference_type", "value"],
+      "properties": {
+        "reference_type": {
+          "enum": [
+            "concept_id",
+            "namespace_id",
+            "display_name",
+            "alias",
+            "selector",
+            "minecraft_id"
+          ]
+        },
+        "value": { "type": "string", "minLength": 1 }
+      }
+    },
+    "createConceptPayload": {
+      "type": "object",
+      "required": ["concept_type", "display_name"],
+      "properties": {
+        "concept_type": { "enum": ["item", "weapon", "tool", "food", "block"] },
+        "subtype": { "type": "string" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "namespace_hint": { "type": "string" },
+        "description": { "type": "string" },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "properties": { "type": "object" },
+        "appearance": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "concept_type": { "const": "weapon" } },
+            "required": ["concept_type"]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "properties": { "max_stack_size": { "const": 1 } }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

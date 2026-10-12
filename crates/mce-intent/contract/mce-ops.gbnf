@@ -1,0 +1,17 @@
+# Constrains the MCE Model to a well-formed JSON array of operation objects. Guarantees:
+#  - the "operation" value is one of the valid MCE operations (no "pickaxe"-as-operation slips),
+#  - balanced braces (no truncated output),
+#  - bounded string length and numeric precision (no rambling strings, no infinite decimals).
+# So the model can never emit unparseable or schema-invalid-shaped output, whatever the request.
+root    ::= ws "[" ws ( op ( ws "," ws op )* )? ws "]" ws
+op      ::= "{" ws "\"operation\"" ws ":" ws opname ws "," ws "\"payload\"" ws ":" ws object ws "}"
+opname  ::= "\"create_concept\"" | "\"update_concept\"" | "\"delete_concept\"" | "\"add_recipe\"" | "\"remove_recipe\"" | "\"clarify_request\"" | "\"unsupported_request\""
+object  ::= "{" ws ( member ( ws "," ws member )* )? ws "}"
+member  ::= string ws ":" ws value
+value   ::= object | array | string | number | "true" | "false" | "null"
+array   ::= "[" ws ( value ( ws "," ws value )* )? ws "]"
+string  ::= "\"" char{0,64} "\""
+char    ::= [^"\\] | "\\" ( ["\\/bfnrt] | "u" hex hex hex hex )
+hex     ::= [0-9a-fA-F]
+number  ::= "-"? ( "0" | [1-9] [0-9]{0,4} ) ( "." [0-9] [0-9]? [0-9]? )?
+ws      ::= [ \t\n]{0,2}

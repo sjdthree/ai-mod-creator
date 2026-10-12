@@ -1,0 +1,26 @@
+{
+  "case_id": "E2E-WEAPON-001",
+  "category": "create",
+  "initial_state_fixture": "empty_project",
+  "request": "Create a ruby sword called Ruby Blade with 1200 durability and 9 attack damage.",
+  "expected_operations": [
+    {
+      "operation": "create_concept",
+      "payload": {
+        "concept_type": "weapon",
+        "subtype": "sword",
+        "display_name": "Ruby Blade",
+        "properties": { "durability": 1200, "attack_damage": 9.0, "max_stack_size": 1 }
+      }
+    }
+  ],
+  "expected_state_assertions": [
+    { "type": "concept_exists", "display_name": "Ruby Blade" }
+  ],
+  "required_verification": ["schema", "semantic", "build", "server_boot", "registry", "gametest", "client_smoke"],
+  "expected_runtime_assertions": [
+    { "type": "registry_exists" },
+    { "type": "property_equals", "property": "durability", "expected": 1200 }
+  ],
+  "maximum_retries": 1
+}

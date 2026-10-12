@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mce.dev/schemas/0.1.0/recipe.schema.json",
+  "title": "MCL Recipe Document",
+  "description": "Canonical recipe document (SPEC-004 §15).",
+  "type": "object",
+  "required": ["schema_version", "document_type", "document_id", "revision", "recipe"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "document_type": { "const": "recipe" },
+    "document_id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "recipe": {
+      "type": "object",
+      "required": ["recipe_id", "recipe_type", "result"],
+      "properties": {
+        "recipe_id": { "type": "string", "minLength": 1 },
+        "namespace_id": { "type": "string" },
+        "recipe_type": { "enum": ["shaped", "shapeless", "smelting", "blasting"] },
+        "pattern": { "type": "array", "items": { "type": "string" }, "maxItems": 3 },
+        "key": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/reference" }
+        },
+        "ingredients": { "type": "array", "items": { "$ref": "#/$defs/reference" } },
+        "ingredient": { "$ref": "#/$defs/reference" },
+        "result": { "$ref": "#/$defs/reference" },
+        "count": { "type": "integer", "minimum": 1 },
+        "experience": { "type": "number", "minimum": 0 },
+        "cooking_time_ticks": { "type": "integer", "minimum": 0 },
+        "status": { "enum": ["active", "deleted"] }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "recipe_type": { "const": "shaped" } },
+            "required": ["recipe_type"]
+          },
+          "then": { "required": ["pattern", "key"] }
+        },
+        {
+          "if": {
+            "properties": { "recipe_type": { "const": "shapeless" } },
+            "required": ["recipe_type"]
+          },
+          "then": { "required": ["ingredients"] }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "required": ["reference_type", "value"],
+      "properties": {
+        "reference_type": {
+          "enum": ["concept_id", "namespace_id", "display_name", "alias", "selector", "minecraft_id"]
+        },
+        "value": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

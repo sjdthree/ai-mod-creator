@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mod Creation Engine</title>
+<style>
+  :root {
+    --ground: #14161b; --panel: #1a1d24; --panel-2: #20242d; --edge: #2b313c;
+    --ink: #e8eaf0; --muted: #8b92a2; --faint: #5b6272;
+    --accent: #35d07f; --accent-ink: #0a1f14;
+    --ok: #35d07f; --work: #e6b23a; --bad: #e5533c;
+    --grid: rgba(255,255,255,.03);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --r: 10px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --ground: #eceae3; --panel: #f6f4ee; --panel-2: #efece3; --edge: #d8d4c8;
+      --ink: #1b1d22; --muted: #6a7080; --faint: #a2a698;
+      --accent: #1f9e5e; --accent-ink: #ffffff; --grid: rgba(0,0,0,.03);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #14161b; --panel: #1a1d24; --panel-2: #20242d; --edge: #2b313c;
+    --ink: #e8eaf0; --muted: #8b92a2; --faint: #5b6272; --accent: #35d07f;
+    --accent-ink: #0a1f14; --grid: rgba(255,255,255,.03);
+  }
+  :root[data-theme="light"] {
+    --ground: #eceae3; --panel: #f6f4ee; --panel-2: #efece3; --edge: #d8d4c8;
+    --ink: #1b1d22; --muted: #6a7080; --faint: #a2a698; --accent: #1f9e5e;
+    --accent-ink: #ffffff; --grid: rgba(0,0,0,.03);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans);
+    font-size: 15px; line-height: 1.5;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+  /* ---- sidebar ---- */
+  .side { background: var(--panel); border-right: 1px solid var(--edge); display: flex; flex-direction: column; min-height: 0; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; }
+  .brand .glyph { width: 26px; height: 26px; image-rendering: pixelated; }
+  .brand h1 { font-family: var(--mono); font-size: 14px; letter-spacing: .5px; margin: 0; font-weight: 700; }
+  .brand h1 b { color: var(--accent); }
+  .brand .ver { font-family: var(--mono); font-size: 10px; color: var(--faint); margin-left: auto; }
+  .proj { padding: 0 14px 12px; }
+  .proj label { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .proj select {
+    width: 100%; margin-top: 6px; padding: 8px 10px; background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--edge); border-radius: 8px; font: inherit;
+  }
+  .items { flex: 1; overflow-y: auto; padding: 8px 10px 12px; min-height: 0; }
+  .items .hd { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); padding: 6px 6px; display: flex; justify-content: space-between; }
+  .card {
+    display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 9px;
+    border: 1px solid transparent;
+  }
+  .card:hover { background: var(--panel-2); border-color: var(--edge); }
+  .card canvas { width: 34px; height: 34px; image-rendering: pixelated; background: var(--panel-2); border: 1px solid var(--edge); border-radius: 6px; }
+  .card .nm { font-weight: 600; font-size: 14px; }
+  .card .ty { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .side .foot { border-top: 1px solid var(--edge); padding: 10px 14px; display: flex; gap: 8px; align-items: center; }
+  /* ---- main ---- */
+  .main { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 14px 26px; border-bottom: 1px solid var(--edge); }
+  .topbar .sp { flex: 1; }
+  .stage { max-width: 760px; margin: 0 auto; width: 100%; padding: 34px 26px 60px; }
+  .hero h2 { font-size: 26px; margin: 0 0 4px; letter-spacing: -.3px; text-wrap: balance; }
+  .hero p { color: var(--muted); margin: 0 0 20px; }
+  .composer {
+    background: var(--panel); border: 1px solid var(--edge); border-radius: 14px; padding: 14px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.18);
+  }
+  .composer textarea {
+    width: 100%; resize: none; border: 0; outline: 0; background: transparent; color: var(--ink);
+    font: 17px/1.5 var(--sans); min-height: 58px;
+  }
+  .composer .row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .refbar { display: flex; align-items: center; gap: 9px; padding: 7px 9px 10px; margin: -3px -3px 8px; border-bottom: 1px solid var(--edge); }
+  .refbar .reftag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); padding: 3px 7px; border-radius: 6px; }
+  .refbar .refic { width: 20px; height: 20px; image-rendering: pixelated; border-radius: 4px; }
+  .refbar b { font-size: 14px; }
+  .refbar .refhint { color: var(--muted); font-size: 12px; }
+  .refbar .refx { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--panel-2); border: 1px solid var(--edge); border-radius: 7px; padding: 4px 9px; cursor: pointer; }
+  .refbar .refx:hover { color: var(--ink); border-color: var(--accent); }
+  .card { cursor: pointer; }
+  .card.selected { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: var(--accent); }
+  .card .undo { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--muted); background: transparent; border: 0; cursor: pointer; opacity: 0; }
+  .card:hover .undo, .card.selected .undo { opacity: 1; }
+  .card .undo:hover { color: var(--accent); }
+  .examples { display: flex; gap: 7px; flex-wrap: wrap; }
+  .chip {
+    font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--panel-2);
+    border: 1px solid var(--edge); padding: 5px 9px; border-radius: 20px; cursor: pointer;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--accent); }
+  /* While a create/update is running, the whole input surface is locked + dimmed so the app can't be
+     given a confusing second instruction mid-build (and it visibly reads as "working, please wait"). */
+  .locked { opacity: .4; pointer-events: none; filter: grayscale(.4); transition: opacity .15s ease; }
+  .spacer { flex: 1; }
+  button.primary {
+    font: 600 15px var(--sans); color: var(--accent-ink); background: var(--accent);
+    border: 0; border-radius: 10px; padding: 11px 20px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center;
+  }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  button.big { font-size: 16px; padding: 14px 24px; border-radius: 12px; box-shadow: 0 2px 14px color-mix(in srgb, var(--accent) 40%, transparent); }
+  button.big:hover:not(:disabled) { filter: brightness(1.06); }
+  button.ghost {
+    font: 600 14px var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--edge);
+    border-radius: 9px; padding: 9px 15px; cursor: pointer;
+  }
+  button.ghost:hover { border-color: var(--accent); }
+  button.ghost:disabled { opacity: .4; cursor: default; }
+  .iconbtn { background: var(--panel-2); border: 1px solid var(--edge); color: var(--muted); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 15px; }
+  .iconbtn:hover { color: var(--ink); }
+  /* ---- pipeline ---- */
+  .run { margin-top: 26px; }
+  .runhead { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 10px; border-radius: 11px; background: var(--panel); border: 1px solid var(--edge); }
+  .runhead .runic { width: 40px; height: 40px; image-rendering: pixelated; border-radius: 7px; border: 1px solid var(--edge); background: var(--panel-2); }
+  .runhead .runtitle { font-weight: 700; font-size: 16px; }
+  .runhead .runquote { color: var(--muted); font-size: 13px; font-style: italic; margin-top: 1px; }
+  .pipe { display: flex; flex-direction: column; gap: 2px; }
+  .step { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 9px; }
+  .step .dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--edge); display: grid; place-items: center; flex: none; font-size: 11px; }
+  .step .lbl { font-family: var(--mono); font-size: 12px; letter-spacing: .4px; }
+  .step .sub { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .step[data-s="done"] .dot { border-color: var(--ok); background: var(--ok); color: var(--accent-ink); }
+  .step[data-s="active"] .dot { border-color: var(--work); border-right-color: transparent; animation: spin 0.8s linear infinite; }
+  .step[data-s="active"] .lbl { color: var(--ink); }
+  .step[data-s="fail"] .dot { border-color: var(--bad); background: var(--bad); color: #fff; }
+  .step[data-s="idle"] { opacity: .5; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .step[data-s="active"] .dot { animation: none; } }
+  .result { margin-top: 20px; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel); overflow: hidden; }
+  .result .bar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .result .bar .big { width: 46px; height: 46px; image-rendering: pixelated; border-radius: 8px; border: 1px solid var(--edge); background: var(--panel-2); }
+  .result .bar .t { font-weight: 700; font-size: 16px; }
+  .result .bar .d { color: var(--muted); font-size: 13px; }
+  .badge { font-family: var(--mono); font-size: 11px; padding: 4px 9px; border-radius: 20px; letter-spacing: .4px; }
+  .badge.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
+  .badge.warn { color: var(--work); background: color-mix(in srgb, var(--work) 16%, transparent); }
+  .badge.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 16%, transparent); }
+  .actions { display: flex; gap: 10px; padding: 0 16px 10px; align-items: center; }
+  .actionhint { padding: 0 16px 16px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+  .actionhint b { color: var(--ink); font-weight: 600; }
+  .suggest { padding: 2px 16px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .suggestlabel { color: var(--muted); font-size: 12px; }
+  .suggest .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .suggest .chip { font: 500 12px var(--sans); color: var(--ink); background: var(--panel-2);
+    border: 1px solid var(--edge); padding: 6px 12px; border-radius: 20px; cursor: pointer; }
+  .suggest .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .empty { color: var(--faint); font-family: var(--mono); font-size: 12px; text-align: center; padding: 22px; }
+  /* non-modal toast — never blocks the webview the way native alert()/confirm() do */
+  #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; max-width: 380px; }
+  .toast { background: var(--panel); border: 1px solid var(--edge); border-left: 3px solid var(--accent);
+    border-radius: 10px; padding: 11px 14px; font-size: 13px; color: var(--ink); box-shadow: 0 6px 24px rgba(0,0,0,.28);
+    white-space: pre-wrap; animation: toastin .18s ease; }
+  .toast.warn { border-left-color: var(--work); }
+  .toast.bad { border-left-color: var(--bad); }
+  @keyframes toastin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .foot .status { font-family: var(--mono); font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .foot .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+  .foot .pulse.off { background: var(--faint); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <canvas class="glyph" width="16" height="16" data-icon="sword"></canvas>
+      <h1>MOD<b>·</b>CREATION</h1>
+      <span class="ver">v1</span>
+    </div>
+    <div class="proj">
+      <label for="proj">Project</label>
+      <select id="proj"><option>rubysword</option></select>
+    </div>
+    <div class="items">
+      <div class="hd"><span>Your creations</span><span id="count">0</span></div>
+      <div id="itemlist"></div>
+    </div>
+    <div class="foot">
+      <div class="status"><span class="pulse" id="pulse"></span><span id="enginestat">engine ready</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="badge" id="loaderbadge" title="Active mod loader for this session">loader…</span>
+      <div class="sp"></div>
+      <button class="iconbtn" id="themebtn" title="Toggle theme">◐</button>
+    </div>
+    <div class="stage">
+      <div class="hero">
+        <h2 id="herotitle">Describe your creation</h2>
+        <p id="herosub">Plain English in — a real, verified Minecraft mod out. No coding.</p>
+        <div class="composer">
+          <div class="refbar" id="refbar" hidden>
+            <span class="reftag">Refining</span>
+            <canvas class="refic" width="16" height="16" id="refic"></canvas>
+            <b id="refname">—</b>
+            <span class="refhint">— tweak it, then Update</span>
+            <button class="refx" id="refx" title="Start a new creation instead">✕ new</button>
+          </div>
+          <textarea id="req" placeholder="e.g. a frostforged blade called Winterbite that does 10 damage" autofocus></textarea>
+          <div class="row">
+            <div class="examples" id="examples"></div>
+            <div class="spacer"></div>
+            <button class="primary" id="createbtn"><span id="createlbl">Create</span></button>
+          </div>
+        </div>
+      </div>
+
+      <section class="run" id="run" hidden>
+        <div class="runhead" id="runhead">
+          <canvas class="runic" width="16" height="16" id="runic"></canvas>
+          <div class="runtext">
+            <div class="runtitle" id="runtitle">—</div>
+            <div class="runquote" id="runquote">—</div>
+          </div>
+        </div>
+        <div class="pipe" id="pipe"></div>
+        <div class="result" id="result" hidden>
+          <div class="bar">
+            <canvas class="big" width="16" height="16" id="resicon"></canvas>
+            <div>
+              <div class="t" id="restitle">—</div>
+              <div class="d" id="resdesc">—</div>
+            </div>
+            <div class="spacer" style="flex:1"></div>
+            <span class="badge ok" id="resbadge">verified</span>
+          </div>
+          <div class="actions" id="actionsrow">
+            <button class="primary big" id="resplay">▶ Quick Test in a sandbox Minecraft</button>
+            <button class="ghost" id="resexport">Add to my Minecraft</button>
+          </div>
+          <div class="actionhint" id="actionhint">
+            <b>Quick Test</b> opens a self-contained <b>Minecraft 1.21.1 + <span class="ldrname">Fabric</span></b> sandbox that ships with the app — no setup, and it never touches your own worlds. This is why it works even if your own Minecraft is a different version. <b>Recommended for a first look.</b><br>
+            Once it looks right in the sandbox, <b>Add to my Minecraft</b> copies it into your real game — that needs Minecraft&nbsp;1.21.1 + <span class="ldrname">Fabric</span> installed there too. (You can jump straight to this if you like.)
+          </div>
+          <div class="suggest" id="failsuggest" hidden>
+            <span class="suggestlabel" id="suggestlabel">Try one of these instead:</span>
+            <span class="chips" id="suggestchips"></span>
+          </div>
+          <div class="actions" id="failactions" hidden>
+            <button class="primary" id="updatebtn" hidden></button>
+            <button class="primary" id="retrybtn">↻ Try again</button>
+            <button class="ghost" id="detailsbtn">What happened?</button>
+          </div>
+          <div class="actionhint" id="faildetail" hidden></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<div id="toasts"></div>
+
+<script>
+/* ---------- non-modal notifications (NEVER use native alert/confirm — they freeze the webview) ---------- */
+function toast(msg, kind, ms){
+  const box = document.getElementById("toasts"); if (!box) return;
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " " + kind : "");
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(()=>{ el.style.opacity = "0"; el.style.transition = "opacity .3s"; setTimeout(()=>el.remove(), 300); }, ms || 6000);
+}
+// Never let an await hang the UI forever: race a promise against a timeout. A stuck backend (e.g. a
+// wedged Gradle build) then surfaces as a normal failure the user can retry, not a frozen app.
+function withTimeout(p, ms, msg){
+  let t; const timeout = new Promise((_, rej)=>{ t = setTimeout(()=>rej(new Error(msg)), ms); });
+  return Promise.race([p, timeout]).finally(()=>clearTimeout(t));
+}
+// Make any frontend error VISIBLE (there's no console to watch in the packaged app) so a bug never just
+// freezes silently — it shows up as a toast the user can report.
+window.addEventListener("error", e => toast("UI hiccup: " + (e && e.message ? e.message : e), "bad", 15000));
+window.addEventListener("unhandledrejection", e => toast("UI hiccup: " + (e && e.reason ? (e.reason.message || e.reason) : e), "bad", 15000));
+/* ---------- pixel icons: recognizable silhouettes, tinted, drawn on canvas ---------- */
+const MASKS = {
+  sword: ["..........ee....",".........ebb....","........ebb.....",".......ebb......","......ebb.......",".....ebb........","....ebb.........","...ebbg.........","..gggbg.........","..ggbgg.........","...hh...........","..hh............","..hh............",".hh.............",".hh.............","................"],
+  pickaxe: [".e..........e...",".eeb......bee...","...eeb..beeb....","....ebeebb......","......ehb.......",".....hbeh.......",".....hbh........","....hbh.........","....hbh.........","...hbh..........","...hbh..........","..hbh...........","..hbh...........",".hbh............",".hh.............","................"],
+  axe: [".....eeee.......","....ebbbbe......","...ebbbbbe......","...ebbbbb.......","...ebbbbh.......","...ebbbh........","....ehbh........",".....hbh........",".....hbh........","....hbh.........","....hbh.........","...hbh..........","...hbh..........","..hbh...........","..hh............","................"],
+  food: [".......h........","......hg........",".....hg.........","...eebbee.......","..ebbbbbbe......",".ebbbbbbbbe.....",".ebbbbbbbbe.....",".ebbbbbbbbe.....",".ebbbbbbbbe.....",".ebbbbbbbbe.....","..ebbbbbbe......","..ebbbbbbe......","...ebbbbe.......","....eebe........","................","................"],
+  gem: ["................","....eeeeee......","...ebbbbbbe.....","..eebbbbbbee....",".ebbbbbbbbbbe...",".ebbbbbbbbbbe...","..ebbbbbbbbe....","...ebbbbbbe.....","...ebbbbbe......","....ebbbe.......",".....ebe........","......e.........","................","................","................","................"],
+  block: null,
+};
+function tint(seed) {
+  const base = (seed % 200 + 40);
+  const p = [base, base*.55|0, base*.4|0];
+  const s = [base*.35|0, base*.28|0, base*.22|0];
+  const e = [Math.min(255,base+50), (base*.55|0)+26, (base*.4|0)+22];
+  return { b:`rgb(${p})`, h:`rgb(${s})`, g:`rgb(${s})`, e:`rgb(${e})` };
+}
+function drawIcon(cv, kind, seed=137) {
+  const ctx = cv.getContext("2d"); ctx.clearRect(0,0,16,16);
+  const c = tint(seed);
+  if (kind === "block" || !MASKS[kind]) {
+    for (let y=0;y<16;y++) for (let x=0;x<16;x++){
+      const edge = x===0||y===0||x===15||y===15;
+      ctx.fillStyle = edge ? c.h : (((x*7+y*13+seed)%5)<3 ? c.b : c.e);
+      ctx.fillRect(x,y,1,1);
+    }
+    return;
+  }
+  const m = MASKS[kind];
+  for (let y=0;y<16;y++) for (let x=0;x<16;x++){
+    const ch = m[y][x];
+    if (ch===".") continue;
+    ctx.fillStyle = ch==="e"?c.e: ch==="b"?c.b: c.h;
+    ctx.fillRect(x,y,1,1);
+  }
+}
+const kindOf = t => ({weapon:"sword",tool:"pickaxe",food:"food",item:"gem",block:"block"}[t] || "gem");
+const emojiOf = t => ({weapon:"🗡",tool:"⛏",food:"🍎",item:"💎",block:"🧱"}[t] || "▪");
+function seedOf(s){ let h=0x811c9dc5>>>0; for (const ch of s){ h^=ch.charCodeAt(0); h=Math.imul(h,0x01000193)>>>0; } return h; }
+
+/* ---------- engine bridge: real Tauri backend, or a faithful mock for standalone/demo ---------- */
+const inTauri = !!window.__TAURI__;
+const invoke = (cmd, args) => (window.__TAURI__.core?.invoke || window.__TAURI__.invoke)(cmd, args || {});
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const MockDB = { rubysword: [{name:"Ruby Blade", type:"weapon"}] };
+const MockUndo = {}; // project -> [prior snapshots of the items array]
+async function runStages(onStage){
+  for (const s of ["intent","validate","state","generate","build","verify"]){
+    onStage(s,"active"); await sleep(340+Math.random()*360); onStage(s,"done");
+  }
+}
+const engine = {
+  async listProjects(){ return inTauri ? invoke("list_projects") : Object.keys(MockDB); },
+  async initProject(name){ if (inTauri) return invoke("init_project",{name}); MockDB[name]=MockDB[name]||[]; return {status:"ok"}; },
+  async listItems(project){ return inTauri ? invoke("list_items",{project}) : (MockDB[project]||[]).slice(); },
+  // One entry point for both new creations and refinements — the engine (model + context) decides
+  // whether the request creates or updates. `refineTarget` scopes the request to a known concept.
+  async request(project, text, refineTarget, onStage){
+    if (inTauri) return invoke("request",{project, text, refineTarget});
+    (MockUndo[project] ||= []).push(JSON.parse(JSON.stringify(MockDB[project]||[])));
+    await runStages(onStage);
+    const db = (MockDB[project] ||= []);
+    if (refineTarget){
+      const it = db.find(x=>x.name===refineTarget) || db[db.length-1];
+      const m = text.match(/rename[^A-Za-z]*(?:it |to )?([A-Z][\w ]+)/); if (m) it.name = m[1].trim();
+      it.updated = true;
+      return { status:"verified", item: it, updated:true };
+    }
+    const item = inferCreation(text);
+    db.push(item);
+    return { status:"verified", item, jar:`${project}/mod/build/libs/${project}-0.1.0.jar` };
+  },
+  async undo(project){
+    if (inTauri) return invoke("undo",{project});
+    const prev = (MockUndo[project]||[]).pop();
+    if (prev) MockDB[project] = prev;
+    return { ok: !!prev };
+  },
+  async play(project){ return inTauri ? invoke("play",{project}) : (await sleep(500), {started:true}); },
+  async exportMod(project, to){ return inTauri ? invoke("export",{project, to: to||null}) : (await sleep(400), {status:"exported", jar:(to||"~/Library/Application Support/minecraft/mods")+"/"+project+".jar"}); },
+  async minecraftInfo(){ return inTauri ? invoke("minecraft_info") : {modsDir:"~/Library/Application Support/minecraft/mods", exists:true}; },
+  async loaderInfo(){ return inTauri ? invoke("loader_info") : {loader:"fabric", label:"Fabric", minecraft:"1.21.1"}; },
+  async pickModsFolder(){ return inTauri ? invoke("pick_mods_folder") : "~/Library/Application Support/minecraft/mods"; },
+  async modelStatus(){ return inTauri ? invoke("model_status") : true; },
+  async startModel(){ return inTauri ? invoke("start_model") : {state:"running"}; },
+  async installLoader(){ return inTauri ? invoke("install_loader") : (await sleep(800), {state:"installed", detail:"(demo) loader installed."}); },
+  async launchMinecraft(){ return inTauri ? invoke("launch_minecraft") : (await sleep(300), {state:"launched"}); },
+};
+
+/* ---------- UI ---------- */
+const $ = s => document.querySelector(s);
+const STAGES = [["intent"],["validate"],["state"],["generate"],["build"],["verify"]];
+let current = { project: "rubysword", busy: false, lastResult: null, refine: null };
+
+// Guess the creation's name + type from the request, so the UI can name it while the real build runs.
+function inferCreation(text){
+  const type = /\b(sword|blade|dagger|katana|weapon|mace)\b/i.test(text) ? "weapon"
+    : /\b(pickaxe|shovel|spade|hoe|axe|tool|drill)\b/i.test(text) ? "tool"
+    : /\b(apple|food|berry|bread|stew|pie|eat|edible|hunger|snack|meal)\b/i.test(text) ? "food"
+    : /\b(block|ore|stone|brick|plank|log)\b/i.test(text) ? "block" : "item";
+  let m = text.match(/(?:called|named)\s+["“]?([A-Za-z][\w' ]*?)["”]?(?:\s+(?:with|that|,|\.)|$)/i);
+  let name = m ? m[1].trim() : "";
+  if (!name){
+    const words = text.replace(/[^a-zA-Z ]/g," ").split(/\s+/)
+      .filter(w=>w.length>2 && !/^(the|and|with|that|make|create|give|add|new|for|has|does|can|really|very|super)$/i.test(w));
+    name = words.slice(-2).map(w=>w[0].toUpperCase()+w.slice(1)).join(" ") || "your creation";
+  }
+  return { name, type };
+}
+function stageLabel(k, name){
+  const N = name || "it";
+  return ({
+    intent:   "Read your request",
+    validate: `Make sure ${N} is valid`,
+    state:    `Add ${N} to your project`,
+    generate: `Write the mod for ${N}`,
+    build:    `Compile ${N}`,
+    verify:   `Load ${N} into Minecraft and test it`,
+  })[k];
+}
+function renderPipe(states, name){
+  $("#pipe").innerHTML = STAGES.map(([k])=>{
+    const s = states[k] || "idle";
+    const mark = s==="done"?"✓": s==="fail"?"✕": "";
+    return `<div class="step" data-s="${s}"><span class="dot">${mark}</span><span class="lbl">${stageLabel(k,name)}</span><span class="sub">${s==="active"?"working…":""}</span></div>`;
+  }).join("");
+}
+const NEW_PROJECT = "__new__";
+async function loadProjects(select){
+  let projects = await engine.listProjects();
+  if (!projects.length){ await engine.initProject("my-mods"); projects = ["my-mods"]; } // always have one
+  if (select && projects.includes(select)) current.project = select;
+  else if (!projects.includes(current.project)) current.project = projects[0];
+  const sel = $("#proj");
+  sel.innerHTML = projects.map(p=>`<option ${p===current.project?"selected":""}>${p}</option>`).join("")
+    + `<option value="${NEW_PROJECT}">+ New project…</option>`;
+  clearRefine();
+  await refreshItems();
+}
+async function switchProject(){
+  const sel = $("#proj");
+  if (sel.value === NEW_PROJECT){
+    const name = (prompt("Name your new project (letters, numbers, dashes):","my-mods")||"").trim();
+    if (!name){ sel.value = current.project; return; }
+    const safe = name.replace(/[^A-Za-z0-9_-]/g,"-").toLowerCase();
+    try { await engine.initProject(safe); await loadProjects(safe); }
+    catch(e){ toast("Could not create project: "+e, "bad"); sel.value = current.project; }
+    return;
+  }
+  current.project = sel.value;
+  clearRefine();
+  await refreshItems();
+}
+let ITEMS = [];
+async function refreshItems(){
+  ITEMS = await engine.listItems(current.project);
+  $("#count").textContent = ITEMS.length;
+  const list = $("#itemlist");
+  if (current.refine && !ITEMS.some(i=>i.name===current.refine)) clearRefine();
+  if (!ITEMS.length){ list.innerHTML = `<div class="empty">No creations yet.<br>Describe one above.</div>`; }
+  else list.innerHTML = ITEMS.map((it,i)=>`
+    <div class="card ${current.refine===it.name?"selected":""}" data-name="${it.name}" title="Click to refine">
+      <canvas width="16" height="16" data-i="${i}"></canvas>
+      <div><div class="nm">${it.name}</div><div class="ty">${it.type}</div></div>
+      <button class="undo" data-undo="1" title="Undo last change">↶ undo</button>
+    </div>`).join("");
+  list.querySelectorAll("canvas[data-i]").forEach(cv=>{ const it=ITEMS[+cv.dataset.i]; drawIcon(cv, kindOf(it.type), seedOf(it.name)); });
+  list.querySelectorAll(".card").forEach(card=>{
+    card.onclick = e=>{ if (e.target.dataset.undo) return; selectRefine(card.dataset.name); };
+  });
+  list.querySelectorAll("[data-undo]").forEach(b=> b.onclick = doUndo);
+  const has = ITEMS.length>0;
+  const pb=$("#playbtn"); if(pb) pb.disabled = !has;
+  const eb=$("#exportbtn"); if(eb) eb.disabled = !has;
+}
+// Reconstruct an editable one-line description of a creation's CURRENT state, so refining is "pull it
+// up and tweak a number" (change 7 → 8) instead of recalling the phrasing from scratch. Editing a stat
+// value updates it; the engine scopes the whole thing to this concept via --refine (never a duplicate).
+function describeItem(it){
+  const p = it.properties || {};
+  const kind = it.subtype || it.type || "item";
+  const article = /^[aeiou]/i.test(kind) ? "an" : "a";
+  let s = `${article} ${kind} called ${it.name}`;
+  // Numeric stats read naturally as "with N attack damage and N durability".
+  const bits = [];
+  if (p.attack_damage != null) bits.push(`${p.attack_damage} attack damage`);
+  if (p.durability != null) bits.push(`${p.durability} durability`);
+  if (bits.length) s += " with " + bits.join(" and ");
+  // Food nutrition reads as its own clause — "that heals N", never "with heals N". Still round-trips
+  // through the parser (which maps "heals N" → nutrition on the next Update).
+  if (p.nutrition != null) s += ` that heals ${p.nutrition}`;
+  return s;
+}
+function selectRefine(name){
+  const it = ITEMS.find(x=>x.name===name); if (!it) return;
+  current.refine = name;
+  $("#refbar").hidden = false;
+  drawIcon($("#refic"), kindOf(it.type), seedOf(it.name));
+  $("#refname").textContent = it.name;
+  $("#herotitle").textContent = "Refine your creation";
+  $("#herosub").textContent = "Its current definition is loaded below — tweak a number (e.g. change the damage) and hit Update.";
+  $("#req").placeholder = `make it stronger · faster · rename it · give it a recipe…`;
+  $("#createlbl").textContent = "Update";
+  // Pre-fill the box with the item's current definition so a common edit (7 → 8 damage) is one keystroke.
+  $("#req").value = describeItem(it);
+  $("#req").focus();
+  try { const n = $("#req").value.length; $("#req").setSelectionRange(n, n); } catch(_){}
+  document.querySelectorAll(".card").forEach(c=>c.classList.toggle("selected", c.dataset.name===name));
+}
+function clearRefine(){
+  current.refine = null;
+  $("#refbar").hidden = true;
+  $("#herotitle").textContent = "Describe your creation";
+  $("#herosub").textContent = "Plain English in — a real, verified Minecraft mod out. No coding.";
+  $("#req").placeholder = "e.g. a fast ruby dagger that does 6 damage";
+  $("#createlbl").textContent = "Create";
+  document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected"));
+}
+async function doUndo(e){
+  e.stopPropagation();
+  if (current.busy) return;
+  $("#enginestat").textContent = "undoing last change…";
+  await engine.undo(current.project);
+  await refreshItems();
+  $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)";
+}
+const STAGE_KEYS = STAGES.map(s=>s[0]);
+function showBanner(icon, iconSeed, title, desc, badgeText, badgeClass){
+  drawIcon($("#resicon"), icon, iconSeed);
+  $("#restitle").textContent = title;
+  $("#resdesc").textContent = desc;
+  $("#resbadge").textContent = badgeText;
+  $("#resbadge").className = "badge " + badgeClass;
+  $("#actionsrow").hidden = badgeClass !== "ok";  // only offer Play/Add on success
+  $("#actionhint").hidden = badgeClass !== "ok";
+  $("#failactions").hidden = badgeClass === "ok"; // offer Try-again on any failure
+  $("#faildetail").hidden = true;                 // details start collapsed each run
+  $("#failsuggest").hidden = true;                // suggestions populated by handleResult on failure
+  $("#result").hidden = false;
+}
+function setRunHeadTitle(kind, seed, title){ drawIcon($("#runic"), kind, seed); $("#runtitle").textContent = title; }
+async function handleResult(states, res, prov){
+  prov = prov || { name: "your creation", type: "item" };
+  const ok = ["verified","built","updated"].includes(res.status) || res.updated;
+  current.lastCreateOk = ok;   // so Quick Test can warn when the thing you just tried didn't make it
+  if (ok){
+    await refreshItems();
+    // The engine reports the concrete action ("created"/"updated"/"renamed"/"deleted") so the banner
+    // reads truthfully instead of always "created". Fall back to the older updated flag if absent.
+    const action = res.action || (res.updated ? "updated" : "created");
+    // A rename changes the display name; pull the NEW name out of the operations so we show/refine it.
+    const newName = (res.operations||[]).map(o => o && o.payload && o.payload.changes && o.payload.changes.display_name).find(Boolean);
+    if (action === "deleted"){
+      const gone = (res.item && res.item.name) || current.refine || prov.name;
+      STAGE_KEYS.forEach(k=>states[k]="done"); renderPipe(states, gone);
+      setRunHeadTitle("gem", seedOf(gone), `Deleted ${gone}`);
+      showBanner("gem", seedOf(gone), `🗑️  ${gone}`,
+        `“${gone}” was removed from your creations and the mod re-verified without it.`,
+        "deleted ✓", "ok");
+      clearRefine();
+      $("#req").value = "";
+      return;
+    }
+    const isCreate = action === "created";
+    const it = res.item
+      || (newName && ITEMS.find(x=>x.name===newName))
+      || ITEMS.find(x=>x.name===current.refine)
+      || { name: newName || current.refine || prov.name, type: prov.type };
+    STAGE_KEYS.forEach(k=>states[k]="done"); renderPipe(states, it.name);
+    const Cap = action.charAt(0).toUpperCase() + action.slice(1); // Created / Updated / Renamed
+    setRunHeadTitle(kindOf(it.type), seedOf(it.name), `${Cap} ${it.name}`);
+    showBanner(kindOf(it.type), seedOf(it.name), `${emojiOf(it.type)}  ${it.name}`,
+      isCreate ? `Your ${it.type} “${it.name}” is built and verified in Minecraft — it's in your creations, left. Quick-test it or add it to your Minecraft.`
+               : `Your ${it.type} “${it.name}” was ${action} and re-verified in Minecraft — it's in your creations, left.`,
+      isCreate ? "verified ✓" : `${action} ✓`, "ok");
+    if (!isCreate && it.name) selectRefine(it.name);
+    $("#req").value = "";
+    return;
+  }
+  // Non-success: never freeze — say plainly what happened, why, and what to do next.
+  const soft = ["needs_clarification","unsupported","no_op","rejected"].includes(res.status);
+  const running = STAGE_KEYS.find(k=>states[k]==="active");
+  if (running){ states[running] = soft ? "idle" : "fail"; renderPipe(states, prov.name); }
+  setRunHeadTitle("gem", 200, soft ? `Let's tweak “${prov.name}”` : `Couldn't finish ${prov.name}`);
+  // The MCE Model is small and occasionally misreads a request; a plain retry often just works. Every
+  // failure message therefore ends with the concrete next step, and a "Try again" button re-runs it.
+  const SUPPORTED = "items, tools, weapons, food, and blocks";
+  // Engine validation errors arrive as OBJECTS ({code, message, …}). Joining them directly printed
+  // "[object Object]", which made a perfectly clear rejection (e.g. a duplicate name) look like a
+  // meaningless failure — the #1 "it's broken / nothing happens" confusion. Pull out the human messages,
+  // and detect the common duplicate-name case so we can say exactly what's wrong and what to do.
+  const errObjs = Array.isArray(res.errors) ? res.errors : (res.errors ? [res.errors] : []);
+  const errMsgs = errObjs.map(e => (e && (e.message || e.msg)) || (typeof e === "string" ? e : "")).filter(Boolean);
+  const errLine = errMsgs.length ? errMsgs.join("; ") : (res.message || "The values didn't pass validation.");
+  const isDup = errObjs.some(e => e && /DUPLICATE/i.test(e.code || "")) || /already exists/i.test(errLine);
+  const messages = {
+    needs_clarification: ["I didn't quite catch that",
+      `I couldn't turn “${prov.name}” into a creation. Give it a Capitalized name and a number or two — e.g. “a ruby sword called Sting with 9 attack damage” — or just tap Try again.`],
+    unsupported: ["That's not supported yet",
+      `Right now MCE can make ${SUPPORTED} — but not ${res.reason && /entit|mob/i.test(res.reason) ? "mobs or entities" : "that"} yet. Try one of the supported kinds instead.`],
+    no_op: ["Nothing to change",
+      `That request doesn't change anything in “${current.project}”. Describe what you'd like different — e.g. “make ${prov.name} do 12 damage”.`],
+    rejected: isDup
+      ? ["You already made that",
+        `${errLine} It's already in your creations on the left — pick a different name to make another, or refine the existing one.`]
+      : ["That wouldn't be valid Minecraft",
+        `${errLine} Adjust it and try again.`],
+    build_failed: [`“${prov.name}” didn't compile`,
+      "The generated mod failed to build — this is on us, not you. Tap Try again; if it keeps happening, the details below help us fix it."],
+    verification_failed: [`“${prov.name}” didn't pass its in-game test`,
+      `It built, but the automatic in-game check didn't confirm it — so nothing was saved and your last version is untouched. The MCE Model sometimes has an off run; Try again usually fixes it.`],
+  };
+  // Translate raw model/plumbing errors ("no valid operations array", etc.) into something human.
+  let [title, desc] = messages[res.status] || (
+    /operation|intent|model output|parse|json/i.test(res.message||"")
+      ? ["The MCE Model had trouble with that", `It couldn't read that into a clean creation. Try rephrasing more simply, or tap Try again — it's often a one-off.`]
+      : ["Something went wrong", res.message || String(res.status||"unknown")]
+  );
+  showBanner("gem", 200, title, desc, soft ? "needs detail" : "not saved", soft ? "warn" : "bad");
+  // Also toast it — the banner alone was too easy to miss, which made a real, explained rejection read
+  // as "nothing happened". Now every non-success shouts the reason.
+  toast(`${title} — ${desc}`, soft ? "warn" : "bad", 9000);
+  // Stash the raw technical detail behind "What happened?" so power users/us can see it without noise.
+  const detail = (errMsgs.length ? errMsgs.join("; ") : "") || res.reason || res.message || (res.failed_assertions ? "failed checks: "+res.failed_assertions.join(", ") : "") || `status: ${res.status}`;
+  $("#faildetail").textContent = detail;
+  $("#detailsbtn").hidden = !detail;
+  // Duplicate name → OFFER (not auto-do) a one-click switch to UPDATING the existing creation. A plain
+  // "Try again" would just re-reject the same name, so for a duplicate we swap it for "Update <name>".
+  const dupName = isDup ? ((errLine.match(/["“]([^"”]+)["”]/) || [])[1] || null) : null;
+  const upBtn = $("#updatebtn"), retry = $("#retrybtn");
+  if (dupName && ITEMS.some(i => i.name === dupName)){
+    upBtn.textContent = `Update ${dupName} instead`;
+    upBtn.hidden = false; if (retry) retry.hidden = true;
+    upBtn.onclick = ()=>{
+      $("#result").hidden = true; $("#run").hidden = true;
+      selectRefine(dupName);            // enter refine mode + pre-fill the current definition to edit
+      $("#req").scrollIntoView({behavior:"smooth", block:"center"});
+    };
+  } else {
+    upBtn.hidden = true; if (retry) retry.hidden = false;
+  }
+  // Offer concrete close alternatives the engine CAN make — so a dead end becomes a pick-one-of-these.
+  renderSuggestions(current.lastText || prov.name, res.status);
+}
+// The kinds MCE can actually build, and the words we strip to find the "theme" (material/adjective).
+const MAKEABLE = ["sword","pickaxe","axe","shovel","hoe","block"];
+const KNOWN_NOUNS = ["sword","dagger","knife","pickaxe","axe","shovel","hoe","block","wand","staff",
+  "mace","hammer","spear","bow","helmet","chestplate","leggings","boots","armor","shield","ring",
+  "amulet","potion","food","apple","carrot","cake","pepper","gem","tool","weapon","item"];
+const DROP_WORDS = new Set(["a","an","the","some","my","with","that","and","of","to","for","which",
+  "having","so","but","made","really","very","super","it","its","named","called",
+  "durability","damage","heals","heal","attack","speed","mining","mines","fast","strong","heavy"]);
+function themeOf(text){
+  return (text||"").toLowerCase().split(/\s+/)
+    .map(w=>w.replace(/[^a-z]/g,""))
+    .filter(w=>w && !/\d/.test(w) && !DROP_WORDS.has(w) && !KNOWN_NOUNS.includes(w))
+    .slice(0,2).join(" ").trim();
+}
+function buildSuggestions(text, status){
+  const theme = themeOf(text) || "ruby";
+  const chips = MAKEABLE.slice(0,3).map(t=>`a ${theme} ${t}`);
+  if (status !== "unsupported"){
+    // unclear/rejected: also show the fully-specified shape that reliably works
+    chips.push(`a ${theme} sword called Sting with 8 attack damage`);
+  }
+  return [...new Set(chips)].slice(0,4);
+}
+function renderSuggestions(text, status){
+  const box = $("#suggestchips"); box.innerHTML = "";
+  const sugg = buildSuggestions(text, status);
+  if (!sugg.length){ $("#failsuggest").hidden = true; return; }
+  $("#suggestlabel").textContent = status === "unsupported"
+    ? "I can't make that, but I can make one of these — pick one:"
+    : "Not sure I got that. Pick one of these, or edit your request:";
+  sugg.forEach(s=>{
+    const el = document.createElement("span");
+    el.className = "chip"; el.textContent = s;
+    el.onclick = ()=>{ clearRefine(); $("#req").value = s; doCreate(); };
+    box.appendChild(el);
+  });
+  $("#failsuggest").hidden = false;
+}
+function setRunHead(kind, seed, title, quote){
+  drawIcon($("#runic"), kind, seed);
+  $("#runtitle").textContent = title;
+  $("#runquote").textContent = quote;
+}
+// Lock (disable + dim) or unlock the entire create surface — the Create button, the text box, the
+// example pills, the failure suggestion chips, and the creations list (so a refine target can't be
+// changed mid-build). One switch, called on every busy transition, so the app is never showing a
+// live-looking control that silently swallows the click.
+function setCreateSurface(enabled){
+  $("#createbtn").disabled = !enabled;
+  $("#req").disabled = !enabled;
+  ["#examples", "#suggestchips", "#itemlist"].forEach(sel => { const el = $(sel); if (el) el.classList.toggle("locked", !enabled); });
+}
+async function doCreate(){
+  const text = $("#req").value.trim();
+  if (!text){ toast("Type what you want to make first (or tap an example)."); return; }
+  if (current.busy){ toast("Still working on the last one — one sec."); return; }
+  // Claim busy SYNCHRONOUSLY, before any await — otherwise two rapid clicks (e.g. tapping an example,
+  // which auto-creates, then hitting Create) both slip past the check and start CONCURRENT creates on
+  // the same project, which deadlock/corrupt each other in Gradle. This was the "flashes then dead" bug.
+  current.busy = true; setCreateSurface(false);
+  current.lastText = text;   // remembered so "Try again" can re-run a misfired request verbatim
+  // The model-readiness check runs BEFORE the try/finally below, and its awaits (model_status IPC)
+  // can reject — a throw here would escape with busy still claimed, permanently wedging every later
+  // click (Create / Try again / pill) behind `if (current.busy) return`. That was the "steps then
+  // dead" freeze. Guard it so a failed or throwing model check always releases busy and surfaces cleanly.
+  let ready = false;
+  try { ready = await ensureModelReady(); } catch(e){ ready = false; }
+  if (!ready){
+    toast("The creation model isn't running yet — the app tried to start it but couldn't. Check the setup (the local model server), then try again.", "bad", 10000);
+    current.busy = false; setCreateSurface(true);
+    return;
+  }
+  // What are we making? Use the refine target, else guess from the request — so the UI names it now.
+  const prov = current.refine
+    ? { name: current.refine, type: (ITEMS.find(x=>x.name===current.refine)||{}).type || "item" }
+    : inferCreation(text);
+  $("#run").hidden = false; $("#result").hidden = true;
+  setRunHead(kindOf(prov.type), seedOf(prov.name),
+    current.refine ? `Refining ${prov.name}` : `Creating ${prov.name}`, `“${text}”`);
+  const states = {}; renderPipe(states, prov.name);
+  $("#run").scrollIntoView({behavior:"smooth", block:"nearest"});
+  // Real builds take ~1 min with no streaming, so animate the stages on a timer; the mock drives
+  // onStage directly. Either way we "sit" on the last stage until the real result arrives.
+  let idx = 0, timer = null;
+  const advance = ()=>{ if (idx>0) states[STAGE_KEYS[idx-1]]="done"; if (idx<STAGE_KEYS.length) states[STAGE_KEYS[idx]]="active"; renderPipe(states, prov.name); idx++; };
+  const onStage = inTauri ? ()=>{} : (s,st)=>{ states[s]=st; renderPipe(states, prov.name); };
+  if (inTauri){ advance(); timer = setInterval(()=>{ if (idx < STAGE_KEYS.length) advance(); else { clearInterval(timer); timer=null; } }, 1300); }
+  try {
+    // 7-min UI backstop (the engine's own build/verify timeouts fire first at 5/4 min) so a wedged
+    // build can never leave the UI showing "all steps, then nothing".
+    const res = await withTimeout(
+      engine.request(current.project, text, current.refine, onStage),
+      420000,
+      `This is taking unusually long and may be stuck. The very first build downloads Minecraft/${window.MCE_LOADER_LABEL} once — tap ↻ Try again to give it another go; if it keeps happening, restart the app.`);
+    if (timer) clearInterval(timer);
+    current.lastResult = res;
+    await handleResult(states, res, prov);
+  } catch(e){
+    if (timer) clearInterval(timer);
+    current.lastCreateOk = false;
+    const running = STAGE_KEYS.find(k=>states[k]==="active") || "build";
+    states[running]="fail"; renderPipe(states, prov.name);
+    setRunHead("gem", 200, `Couldn't make ${prov.name}`, `“${text}”`);
+    const msg = (e && (e.message||e)) + "";
+    const stuck = /taking unusually long/.test(msg);
+    setEngineStat(inTauri ? "MCE Model ready" : "demo mode (no engine)", inTauri);
+    showBanner("gem", 200, stuck ? "That took too long" : "The engine hit a snag",
+      stuck ? msg : "Something interrupted the build — often the toolchain still warming up. Tap ↻ Try again; details below if it persists.", "error", "bad");
+    $("#faildetail").textContent = msg;
+    $("#detailsbtn").hidden = false;
+    toast(stuck ? "Build timed out — tap Try again." : "Create failed — tap Try again.", "bad", 8000);
+  } finally {
+    current.busy = false; setCreateSurface(true);
+  }
+}
+let playing = false;
+async function doPlay(){
+  // Quick test: an isolated NeoForge sandbox client (doesn't touch your real Minecraft/worlds).
+  if (playing){ toast("The sandbox is already starting — give it a moment."); return; }
+  await refreshItems();
+  const names = ITEMS.map(x=>x.name).filter(Boolean);
+  if (!names.length){
+    toast("Nothing to test yet — this project has no saved creations. Create something (ending in ✓) first.", "warn");
+    return;
+  }
+  // Tell the player what's in the sandbox — non-modally — so if the thing they just tried isn't listed
+  // (e.g. the last request failed), they see it, without a dialog that could freeze the app.
+  let heads = `Launching sandbox with: ${names.join(", ")}.  In-world you're auto-Creative — press E → Combat/Tools/Building tab, or search a name.`;
+  if (current.lastCreateOk === false && current.lastText){
+    heads += `  ⚠ Your last request (“${current.lastText}”) didn't succeed, so it's not included.`;
+  }
+  // The FIRST Quick Test downloads the bundled Minecraft 1.21.1 + NeoForge sandbox once — that can take a
+  // few MINUTES, not the ~30–60s a warmed-up launch takes. Say so up front (so it doesn't read as frozen),
+  // and once one has succeeded, remember it and drop back to the fast-path wording.
+  const FIRST_QT_KEY = "mce.quicktested";
+  const firstRun = !localStorage.getItem(FIRST_QT_KEY);
+  if (firstRun){
+    heads += "  ⓘ First run downloads the sandbox once — this can take a few minutes; it's quick after that.";
+  }
+  toast(heads, current.lastCreateOk === false ? "warn" : null, firstRun ? 12000 : 9000);
+  playing = true;
+  const baseMsg = firstRun
+    ? `first Quick Test: setting up the Minecraft 1.21.1 + ${window.MCE_LOADER_LABEL} sandbox (one-time download, a few minutes)`
+    : `opening the sandbox Minecraft 1.21.1 + ${window.MCE_LOADER_LABEL}… (~30–60s)`;
+  // A live elapsed-time ticker so a long first-run download visibly stays alive instead of looking hung.
+  const t0 = Date.now();
+  const fmt = s => s >= 60 ? `${Math.floor(s/60)}m ${s%60}s` : `${s}s`;
+  $("#enginestat").textContent = baseMsg + "…";
+  const ticker = setInterval(()=>{
+    $("#enginestat").textContent = `${baseMsg}… (${fmt(Math.round((Date.now()-t0)/1000))} elapsed — still working)`;
+  }, 1000);
+  try {
+    await engine.play(current.project);
+    localStorage.setItem(FIRST_QT_KEY, "1");   // subsequent launches use the faster wording
+    $("#enginestat").textContent = "sandbox open — find your items in the Combat/Tools tabs";
+    toast("Sandbox is open. Find your items in the Combat / Tools / Building-Blocks tab (or search).", null, 8000);
+  } catch(e){
+    // The backend surfaces real build/launch failures instead of pretending it launched.
+    $("#enginestat").textContent = "sandbox didn't open";
+    toast("The sandbox couldn't open:\n" + e, "bad", 12000);
+  } finally {
+    clearInterval(ticker);
+    playing = false;
+    setTimeout(()=>{ $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)"; }, 6000);
+  }
+}
+const MODS_KEY = "mce.modsDir";
+async function chooseModsFolder(force){
+  let dir = force ? null : localStorage.getItem(MODS_KEY);
+  if (!dir){
+    const info = await engine.minecraftInfo();
+    if (info.exists && !force){ dir = info.modsDir; }
+    else {
+      $("#enginestat").textContent = "choose your Minecraft mods folder…";
+      dir = await engine.pickModsFolder();   // native folder picker
+      $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)";
+      if (!dir) return null;
+    }
+    localStorage.setItem(MODS_KEY, dir);
+  }
+  return dir;
+}
+async function doExport(ev){
+  // "Add to my Minecraft": copy the mod into the player's real mods folder. Shift-click to re-pick.
+  const dir = await chooseModsFolder(ev && ev.shiftKey);
+  if (!dir) return;
+  const info = await engine.minecraftInfo().catch(()=>({}));
+  $("#enginestat").textContent = "adding to your Minecraft…";
+  try {
+    const r = await engine.exportMod(current.project, dir);
+    const L = window.MCE_LOADER_LABEL;
+    // `info.compatible` is loader-aware (NeoForge profile, or Fabric Loader + Fabric API). If their
+    // game isn't set up for the active loader, the copied jar won't load — say so and offer one-click setup.
+    if (info.compatible === false){
+      $("#enginestat").textContent = `copied — needs Minecraft 1.21.1 + ${L}`;
+      toast(`Copied to ${r.jar || dir}\n⚠ Your Minecraft isn't set up for 1.21.1 + ${L}, so it won't load there yet. Use ▶ Quick Test to play it now with zero setup — or click “Set up ${L}” below.`, "warn", 14000);
+      showSetupLoader(dir);
+    } else {
+      $("#enginestat").textContent = "added to " + dir;
+      offerLaunch(`✓ Added to your Minecraft: ${r.jar || dir}`);
+    }
+  } catch(e){
+    $("#enginestat").textContent = "couldn't add to Minecraft";
+    toast("Could not add to Minecraft: " + e + "\nShift-click “Add to my Minecraft” to pick the folder yourself.", "bad", 10000);
+  }
+}
+// Non-modal one-click loader setup: a toast with a real button (no native confirm to freeze the app).
+// Installs whichever loader is active (Fabric → Loader + API; NeoForge → NeoForge profile).
+async function showSetupLoader(){
+  const L = window.MCE_LOADER_LABEL;
+  const box = document.getElementById("toasts"); if (!box) return;
+  const el = document.createElement("div"); el.className = "toast warn";
+  el.innerHTML = `Want me to install <b>Minecraft 1.21.1 + ${L}</b> for you? (Adds a profile${L === "Fabric" ? " + the Fabric API mod" : ""}; won't touch your worlds.)<br>`;
+  const btn = document.createElement("button"); btn.className = "chip"; btn.style.marginTop = "8px"; btn.textContent = `Set up ${L}`;
+  el.appendChild(btn); box.appendChild(el);
+  btn.onclick = async ()=>{
+    btn.disabled = true; btn.textContent = "setting up… (a minute or two)";
+    $("#enginestat").textContent = `setting up Minecraft 1.21.1 + ${L}…`;
+    try {
+      const res = await engine.installLoader();
+      // Success → hand them a one-click way to actually run their game, instead of a dead "now go
+      // open your launcher" instruction.
+      offerLaunch("✓ " + (res.detail || `${L} 1.21.1 is set up.`));
+    }
+    catch(e){ toast(`Couldn't set it up automatically: ${e}\nUse ▶ Quick Test to play now, or install ${L} for Minecraft 1.21.1 manually.`, "bad", 12000); }
+    $("#enginestat").textContent = inTauri ? "MCE Model ready" : "demo mode (no engine)";
+    el.remove();
+  };
+  setTimeout(()=>el.remove(), 20000);
+}
+
+// A toast that offers to actually launch the game: "run your Minecraft loader — or click here".
+function offerLaunch(prefix){
+  const L = window.MCE_LOADER_LABEL;
+  const profile = L === "Fabric" ? "fabric-loader 1.21.1" : "NeoForge 1.21.1";
+  const box = document.getElementById("toasts"); if (!box) return;
+  const el = document.createElement("div"); el.className = "toast";
+  el.innerHTML = (prefix ? `<b>${prefix}</b><br>` : "") +
+    `Run your Minecraft loader — or click here to open it. Pick the <b>${profile}</b> profile and hit Play.<br>`;
+  const btn = document.createElement("button"); btn.className = "chip"; btn.style.marginTop = "8px"; btn.textContent = "▶ Open Minecraft";
+  el.appendChild(btn); box.appendChild(el);
+  btn.onclick = async ()=>{
+    btn.disabled = true; btn.textContent = "opening Minecraft…";
+    try { await engine.launchMinecraft(); toast(`Opening the Minecraft Launcher — choose the ${profile} profile and hit Play.`, null, 9000); }
+    catch(e){ toast("Couldn't open Minecraft automatically: " + e, "bad", 11000); }
+    el.remove();
+  };
+  setTimeout(()=>el.remove(), 45000);
+}
+
+/* wire */
+// Fresh, distinctively-named examples (deliberately NOT the ruby/gold set) so a new creation is
+// obviously new and never collides with older test mods of the same name.
+const EXAMPLES = ["a frostforged blade called Winterbite, 10 damage","a glowing amethyst lantern block","a titanium drill pickaxe, 2500 durability","a spiced pumpkin tart that heals 9"];
+$("#examples").innerHTML = EXAMPLES.map(e=>`<span class="chip">${e}</span>`).join("");
+// Clicking a standard example fills the box AND creates it — one click, no surprise "nothing happened".
+$("#examples").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ clearRefine(); $("#req").value=c.textContent; $("#req").focus(); doCreate(); });
+$("#createbtn").onclick = doCreate;
+$("#refx").onclick = clearRefine;
+$("#req").addEventListener("keydown", e=>{ if((e.metaKey||e.ctrlKey)&&e.key==="Enter") doCreate(); });
+// Play/Export live in the result card (after a run); the old top-nav copies were removed, so guard them.
+$("#playbtn")?.addEventListener("click", doPlay); $("#resplay").onclick = doPlay;
+$("#exportbtn")?.addEventListener("click", doExport); $("#resexport").onclick = doExport;
+$("#retrybtn").onclick = ()=>{ if (current.lastText){ $("#req").value = current.lastText; } doCreate(); };
+$("#detailsbtn").onclick = ()=>{ const d = $("#faildetail"); d.hidden = !d.hidden; $("#detailsbtn").textContent = d.hidden ? "What happened?" : "Hide details"; };
+$("#proj").onchange = switchProject;
+document.querySelectorAll('canvas[data-icon]').forEach(cv=>drawIcon(cv,"sword",90));
+
+// ---- model lifecycle: the app starts & health-checks its own model, so users never touch a terminal ----
+let modelReady = !inTauri;         // demo mode is always "ready"
+function setEngineStat(txt, on){ $("#enginestat").textContent = txt; $("#pulse").classList.toggle("off", !on); }
+async function bootModel(){
+  if (!inTauri){ setEngineStat("demo mode (no engine)", false); return; }
+  setEngineStat("starting the MCE Model…", false);
+  let r; try { r = await engine.startModel(); } catch(e){ r = {state:"unavailable", detail:String(e)}; }
+  if (r && r.state === "unavailable"){ modelReady = false; setEngineStat("MCE Model unavailable — see setup", false); return; }
+  // poll until it finishes loading (first load is a few seconds). modelStatus is an IPC call and can
+  // reject transiently — swallow it so bootModel never throws (a throw would propagate out of
+  // ensureModelReady and wedge doCreate with busy still held).
+  for (let i=0; i<40; i++){
+    let up = false; try { up = await engine.modelStatus(); } catch(e){ up = false; }
+    if (up){ modelReady = true; setEngineStat("MCE Model ready", true); return; }
+    await sleep(1500);
+  }
+  modelReady = false; setEngineStat("MCE Model didn't start — check setup", false);
+}
+// Make sure the model is up before a request; retries the boot if it stalled.
+async function ensureModelReady(){
+  if (modelReady) return true;
+  await bootModel();
+  return modelReady;
+}
+// theme toggle
+$("#themebtn").onclick = ()=>{ const r=document.documentElement; const cur=r.getAttribute("data-theme")|| (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"); r.setAttribute("data-theme", cur==="dark"?"light":"dark"); };
+
+// ---- active mod loader: show which loader (Fabric / NeoForge) this session is building for, so
+// leftover jars from the other loader can't be mistaken for the new one. Set at launch via MCE_LOADER.
+window.MCE_LOADER_LABEL = "Fabric";
+async function showLoader(){
+  let info; try { info = await engine.loaderInfo(); } catch(e){ info = {loader:"fabric", label:"Fabric", minecraft:"1.21.1"}; }
+  const label = info.label || "Fabric", mc = info.minecraft || "1.21.1";
+  window.MCE_LOADER_LABEL = label;
+  const b = $("#loaderbadge");
+  if (b){
+    b.textContent = label + " · MC " + mc;
+    // Fabric uses the "work" accent, NeoForge the "ok" accent — two visually distinct chips.
+    b.className = "badge " + (info.loader === "fabric" ? "warn" : "ok");
+    b.title = `Building ${label} mods (Minecraft ${mc})`;
+  }
+  // Every inline loader name in the copy (explainer, etc.) tracks the active loader.
+  document.querySelectorAll(".ldrname").forEach(e => e.textContent = label);
+  // Loader-specific button tooltips, so the hover text matches what will actually be built/needed.
+  const pb = $("#playbtn"); if (pb) pb.title = `Play in a bundled Minecraft ${mc} + ${label} sandbox — no setup, doesn't touch your own game`;
+  const eb = $("#exportbtn"); if (eb) eb.title = `Copy the mod into your own Minecraft (requires Minecraft ${mc} + ${label} installed)`;
+}
+
+loadProjects();
+showLoader();
+bootModel();
+</script>
+</body>
+</html>

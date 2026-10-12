@@ -1,0 +1,15 @@
+Gemma is provided under and subject to the Gemma Terms of Use found at ai.google.dev/gemma/terms
+
+The model bundled with this application (ai-mod-create-270smol, under models/) is a Model Derivative
+of FunctionGemma (google/functiongemma-270m-it). It has been MODIFIED by sjdthree: fine-tuned to
+translate English requests into AI-mod creator engine operations, then quantized to GGUF (Q8_0).
+Published at huggingface.co/sjdthree/ai-mod-create-270smol.
+
+Use of the model is subject to the Gemma Terms of Use (a copy is in GEMMA_TERMS_OF_USE.txt),
+including the use restrictions of Section 3.2 and the Gemma Prohibited Use Policy
+(ai.google.dev/gemma/prohibited_use_policy), which are incorporated here and apply to you. By using
+the model you agree not to use it, or any output it produces, for any purpose prohibited by
+that policy.
+
+The model's weights are distributed under the Gemma Terms of Use, NOT under this application's
+Apache License 2.0, which covers the application's source code only.

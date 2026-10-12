@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mce.dev/benchmarks/intent_case.schema.json",
+  "title": "Fine-Tuning Intent Unit Test Case",
+  "description": "Layer-2 case (SPEC-005 §4). Evaluates only the English -> MCL operation boundary.",
+  "type": "object",
+  "required": ["case_id", "category", "initial_state_fixture", "request", "expected"],
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^FT-[A-Z0-9]+-\\d+$" },
+    "category": {
+      "enum": [
+        "create",
+        "modify",
+        "reference",
+        "multi",
+        "clarification",
+        "unsupported",
+        "non_mutating",
+        "robustness"
+      ]
+    },
+    "initial_state_fixture": { "type": "string", "minLength": 1 },
+    "request": { "type": "string", "minLength": 1 },
+    "expected": {
+      "type": "object",
+      "required": ["operations"],
+      "properties": {
+        "operations": { "type": "array" },
+        "must_clarify": { "type": "boolean" },
+        "must_reject": { "type": "boolean" },
+        "must_not_mutate": { "type": "boolean" }
+      }
+    }
+  }
+}

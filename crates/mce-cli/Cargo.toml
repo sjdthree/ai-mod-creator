@@ -1,0 +1,27 @@
+[package]
+name = "mce-cli"
+description = "The `mce` command-line interface: orchestration and the user-facing command surface (SPEC-003 §3)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "mce"
+path = "src/main.rs"
+
+[dependencies]
+mce-core.workspace = true
+mce-bench.workspace = true
+mce-state.workspace = true
+mce-validator.workspace = true
+mce-schema.workspace = true
+mce-intent.workspace = true
+mce-generator.workspace = true
+mce-build.workspace = true
+mce-verify.workspace = true
+mce-launch.workspace = true
+clap.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true

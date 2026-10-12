@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mce.dev/schemas/0.1.0/appearance.schema.json",
+  "title": "MCL Appearance Document",
+  "description": "Canonical appearance document (SPEC-004 §17).",
+  "type": "object",
+  "required": ["schema_version", "document_type", "document_id", "revision", "appearance"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "document_type": { "const": "appearance" },
+    "document_id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "appearance": {
+      "type": "object",
+      "required": ["appearance_id", "template", "status"],
+      "properties": {
+        "appearance_id": { "type": "string", "minLength": 1 },
+        "template": { "type": "string", "minLength": 1 },
+        "material_theme": { "type": "string" },
+        "palette": {
+          "type": "object",
+          "properties": {
+            "primary": { "$ref": "#/$defs/color" },
+            "secondary": { "$ref": "#/$defs/color" },
+            "highlight": { "$ref": "#/$defs/color" }
+          }
+        },
+        "style_tags": {
+          "type": "array",
+          "items": {
+            "enum": ["bright", "dark", "ancient", "polished", "rough", "simple", "ornate"]
+          }
+        },
+        "asset_seed": { "type": "integer" },
+        "status": { "enum": ["active", "deleted"] }
+      }
+    }
+  },
+  "$defs": {
+    "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+  }
+}

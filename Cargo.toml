@@ -1,0 +1,42 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2021"
+rust-version = "1.80"
+license = "Apache-2.0"
+repository = "https://github.com/sjdthree/ai-mod-creator"
+authors = ["sjdthree"]
+
+[workspace.dependencies]
+# shared third-party deps, pinned once for reproducibility
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive"] }
+jsonschema = "0.18"
+sha2 = "0.10"
+ulid = "1"
+png = "0.17"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+anyhow = "1"
+ureq = "2"
+
+# internal crates
+mce-core = { path = "crates/mce-core" }
+mce-schema = { path = "crates/mce-schema" }
+mce-state = { path = "crates/mce-state" }
+mce-validator = { path = "crates/mce-validator" }
+mce-generator = { path = "crates/mce-generator" }
+mce-build = { path = "crates/mce-build" }
+mce-verify = { path = "crates/mce-verify" }
+mce-launch = { path = "crates/mce-launch" }
+mce-intent = { path = "crates/mce-intent" }
+mce-bench = { path = "crates/mce-bench" }
+
+[profile.release]
+lto = "thin"

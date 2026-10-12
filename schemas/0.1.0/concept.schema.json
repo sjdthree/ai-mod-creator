@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mce.dev/schemas/0.1.0/concept.schema.json",
+  "title": "MCL Concept Document",
+  "description": "Canonical concept document (SPEC-004 §8).",
+  "type": "object",
+  "required": ["schema_version", "document_type", "document_id", "revision", "concept"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "document_type": { "const": "concept" },
+    "document_id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "created_by_transaction": { "type": "string" },
+    "updated_by_transaction": { "type": "string" },
+    "concept": {
+      "type": "object",
+      "required": [
+        "concept_id",
+        "namespace_id",
+        "concept_type",
+        "display_name",
+        "properties",
+        "status"
+      ],
+      "properties": {
+        "concept_id": { "type": "string", "minLength": 1 },
+        "namespace_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+:[a-z0-9_/]+$"
+        },
+        "concept_type": { "enum": ["item", "weapon", "tool", "food", "block"] },
+        "subtype": { "type": "string" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "properties": { "type": "object" },
+        "appearance_id": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "status": { "enum": ["active", "deleted"] }
+      }
+    }
+  }
+}

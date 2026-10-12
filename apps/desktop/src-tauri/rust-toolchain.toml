@@ -1,0 +1,5 @@
+# The Tauri dependency tree currently pulls crate versions that use the newer Cargo manifest spec
+# (`+spec-1.1.0`), which stable Rust 1.97 can't parse yet. Pin the desktop app to a recent toolchain
+# so `cargo tauri dev/build` works out of the box. (Drop this once stable ≥ 1.98 is available.)
+[toolchain]
+channel = "nightly"

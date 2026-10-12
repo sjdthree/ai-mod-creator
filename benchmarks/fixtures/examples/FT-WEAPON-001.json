@@ -1,0 +1,25 @@
+{
+  "case_id": "FT-WEAPON-001",
+  "category": "create",
+  "initial_state_fixture": "empty_project",
+  "request": "Create a ruby sword called Ruby Blade with 1200 durability.",
+  "expected": {
+    "operations": [
+      {
+        "operation": "create_concept",
+        "payload": {
+          "concept_type": "weapon",
+          "subtype": "sword",
+          "display_name": "Ruby Blade",
+          "properties": {
+            "durability": 1200,
+            "max_stack_size": 1
+          }
+        }
+      }
+    ],
+    "must_clarify": false,
+    "must_reject": false,
+    "must_not_mutate": false
+  }
+}

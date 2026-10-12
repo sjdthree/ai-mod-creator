@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ---- Every-commit tier (SPEC-005 §28) ----
+  # Fast, deterministic, no language model and no Minecraft.
+  every-commit:
+    name: fmt · clippy · test · schema · empty-bench
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (stable + rustfmt + clippy)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all --check
+
+      - name: Clippy (deny warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Test (includes schema-validates-spec-examples)
+        run: cargo test --workspace
+
+      - name: Licenses (cargo-deny)
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check licenses
+
+      - name: Benchmark runner — empty suite smoke
+        env:
+          MCE_SOURCE_COMMIT: ${{ github.sha }}
+        run: cargo run -p mce-cli -- bench benchmarks/ --json
+
+  # ---- Deferred tiers (enabled in later phases) ----
+  # These are documented here so the SPEC-005 §28 schedule is visible from day one. They are
+  # gated off until the owning phase lands.
+
+
+  nightly:
+    name: nightly integration + server/GameTest (Phase 3+)
+    if: false # TODO(phase3): enable with the build/verify harness
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "Phase 3+ - integration suite, dedicated-server boot, GameTests, selected full-loop"'
+
+  release-candidate:
+    name: full 50-case loop + zero-false-success audit (Phase 6)
+    if: false # TODO(phase6): enable for release qualification
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "Phase 6 - complete full-loop suite, reproducibility, client smoke, zero false-success"'

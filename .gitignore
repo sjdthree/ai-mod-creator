@@ -1,0 +1,63 @@
+# Rust
+/target
+**/*.rs.bk
+Cargo.lock.orig
+
+# Benchmark run outputs (reports are regenerated; keep the dir via .gitkeep)
+/benchmarks/reports/*
+!/benchmarks/reports/.gitkeep
+
+# Python (tools/)
+__pycache__/
+*.pyc
+.uv/
+
+# Minecraft / Gradle (Phase 3+)
+.gradle/
+build/
+run/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Phase 3 spike build output (ephemeral)
+/.spike/
+
+# local MVP build spike (generated NeoForge project + gradle outputs)
+build-spike/
+
+# Desktop app (Tauri) build artifacts + mobile icon scaffolding (desktop-only app)
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/icons/android/
+apps/desktop/src-tauri/icons/ios/
+apps/desktop/src-tauri/binaries/
+apps/desktop/src-tauri/resources/
+# The MCE Model, fetched from Hugging Face (scripts/fetch_model.sh) — never committed.
+/models/
+
+# auto-generated Tauri store icons
+apps/desktop/src-tauri/icons/Square*.png
+apps/desktop/src-tauri/icons/StoreLogo.png
+
+# Large binaries & distributable artifacts — never commit these to GitHub.
+# Installers/app bundles are rebuilt from source; model weights ship via Hugging Face.
+# These are belt-and-suspenders extension guards on top of the path rules above (binaries/, resources/,
+# models/, target/) so a large binary can't sneak in from any location.
+*.dmg
+*.msi
+*.AppImage
+*.deb
+*.app/
+*.exe
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.onnx
+# NOTE: the embedded Gradle wrapper JAR is a required source asset — keep it tracked.
+*.jar
+!crates/mce-generator/assets/gradle/wrapper/gradle-wrapper.jar

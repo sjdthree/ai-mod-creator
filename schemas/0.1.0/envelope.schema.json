@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mce.dev/schemas/0.1.0/envelope.schema.json",
+  "title": "MCL Common Envelope",
+  "description": "Common top-level fields required on every MCL document (SPEC-004 §4).",
+  "type": "object",
+  "required": ["schema_version", "document_type", "document_id", "revision"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "document_type": {
+      "enum": ["project", "concept", "recipe", "behavior", "appearance", "transaction"]
+    },
+    "document_id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "created_by_transaction": { "type": "string" },
+    "updated_by_transaction": { "type": "string" }
+  }
+}

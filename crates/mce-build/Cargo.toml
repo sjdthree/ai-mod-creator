@@ -1,0 +1,12 @@
+[package]
+name = "mce-build"
+description = "Build Manager: runs the pinned Gradle build and classifies failures (SPEC-003 §10)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+mce-core.workspace = true
+sha2.workspace = true

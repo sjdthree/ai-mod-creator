@@ -1,0 +1,24 @@
+[package]
+name = "mce-desktop"
+version = "0.3.0"
+description = "Mod Creation Engine desktop app"
+edition = "2021"
+rust-version = "1.80"
+license = "Apache-2.0"
+
+# Standalone workspace: the Tauri/webview dependency tree is heavy and platform-specific, so it is
+# deliberately NOT a member of the root Cargo workspace (keeps `cargo build --workspace` / CI light).
+[workspace]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[[bin]]
+name = "mce-desktop"
+path = "src/main.rs"

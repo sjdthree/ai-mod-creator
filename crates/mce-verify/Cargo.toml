@@ -1,0 +1,14 @@
+[package]
+name = "mce-verify"
+description = "Verification Harness: determines whether requested behavior works (SPEC-003 §11)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+mce-core.workspace = true
+mce-state.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
