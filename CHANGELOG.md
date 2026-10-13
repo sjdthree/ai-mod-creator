@@ -12,6 +12,11 @@ All notable changes to this project are documented here. The format is based on
   lock on it, and a second one gets `project_busy` and changes nothing. The desktop app explains it,
   holds Quick Test while a create is running, and clears a result card whose creation is no longer
   in the project. Building from source now needs Rust 1.89 or newer.
+- **Fix: the "a spiced pumpkin tart that heals 9" example failed.** The request parser didn't know
+  "tart", so the request went to the model, which couldn't read it. It now knows tart and more food
+  words (cupcake, pastry, biscuit, pudding, sandwich, burger, pizza, taco, burrito, noodles, jerky,
+  cheese, chocolate, porridge, salad, smoothie), and a test checks that every example button in the
+  app parses without the model.
 - **Desktop:** after a create, the result card and sidebar use the name the engine gave the creation
   (it showed a guessed name like "Pickaxe Durability"), and the new creation is highlighted in the
   sidebar. A successful create no longer shows the failure buttons, including an empty green one.

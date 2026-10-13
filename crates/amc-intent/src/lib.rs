@@ -367,6 +367,23 @@ pub(crate) fn deterministic_create(request: &str) -> Option<Value> {
         ("candy", "food", ""),
         ("donut", "food", ""),
         ("muffin", "food", ""),
+        ("tart", "food", ""),
+        ("cupcake", "food", ""),
+        ("pastry", "food", ""),
+        ("biscuit", "food", ""),
+        ("pudding", "food", ""),
+        ("sandwich", "food", ""),
+        ("burger", "food", ""),
+        ("pizza", "food", ""),
+        ("taco", "food", ""),
+        ("burrito", "food", ""),
+        ("noodles", "food", ""),
+        ("jerky", "food", ""),
+        ("cheese", "food", ""),
+        ("chocolate", "food", ""),
+        ("porridge", "food", ""),
+        ("salad", "food", ""),
+        ("smoothie", "food", ""),
         ("fruit", "food", ""),
         ("snack", "food", ""),
         ("food", "food", ""),
@@ -1397,6 +1414,40 @@ mod tests {
         let fresh =
             deterministic_create("a copper axe called Chopper with 400 durability").unwrap();
         assert!(create_collision_to_update(&fresh, &existing).is_none());
+    }
+
+    /// Every example chip in the desktop app is one click away for a new player, so each must parse
+    /// to a create without the model (which can't be relied on for them). Reads the app's own list.
+    #[test]
+    fn desktop_examples_all_parse_without_the_model() {
+        let ui = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../apps/desktop/ui/index.html");
+        let html = std::fs::read_to_string(&ui).expect("read the desktop UI");
+        let line = html
+            .lines()
+            .find(|l| l.trim_start().starts_with("const EXAMPLES = ["))
+            .expect("the EXAMPLES list in index.html");
+        let list = &line[line.find('[').unwrap()..=line.rfind(']').unwrap()];
+        let examples: Vec<String> = serde_json::from_str(list).expect("EXAMPLES is a JSON array");
+        assert!(!examples.is_empty());
+        for ex in &examples {
+            let op = deterministic_create(ex).unwrap_or_else(|| {
+                panic!("example {ex:?} needs the model; reword it or teach the parser")
+            });
+            assert_eq!(op["operation"], "create_concept", "{ex:?}");
+            assert!(op.pointer("/payload/display_name").is_some(), "{ex:?}");
+        }
+    }
+
+    #[test]
+    fn food_words_parse_as_food() {
+        let op = deterministic_create("a spiced pumpkin tart that heals 9").unwrap();
+        assert_eq!(op.pointer("/payload/concept_type"), Some(&json!("food")));
+        assert_eq!(
+            op.pointer("/payload/display_name"),
+            Some(&json!("Spiced Pumpkin Tart"))
+        );
+        assert_eq!(op.pointer("/payload/properties/nutrition"), Some(&json!(9)));
     }
 
     #[test]
