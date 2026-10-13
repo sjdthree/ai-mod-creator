@@ -1,8 +1,31 @@
-# Contributing to AMC
+# Contributing to AI-mod creator
 
-AMC is developed **solo + Claude Code**, but with team-grade discipline because the product's
-core promise is **0% false-success** (`SPEC-005 §18`). These rules keep work auditable and
-traceable.
+Thanks for helping! Bug reports, ideas, docs fixes and code are all welcome. By taking part you agree
+to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Ways to help
+
+- **Report a bug or share an idea:** [open an issue](https://github.com/sjdthree/ai-mod-creator/issues/new/choose).
+  The exact sentence you typed and a screenshot make a bug much easier to fix.
+- **Find something to work on:** issues labeled
+  [`good first issue`](https://github.com/sjdthree/ai-mod-creator/labels/good%20first%20issue) or
+  [`help wanted`](https://github.com/sjdthree/ai-mod-creator/labels/help%20wanted). For anything big,
+  comment on the issue (or open one) before you start, so we can agree on the approach.
+- **Security problems:** report them privately, as described in [SECURITY.md](SECURITY.md).
+
+## Sending a pull request
+
+1. Fork the repo and create a branch from `main`.
+2. Make your change, with tests for any behavior you change or add.
+3. Run `./scripts/ci.sh` (see [Local checks](#local-checks-before-pushing)). It runs the same checks as CI.
+4. Open a pull request against `main` and fill in the template. CI must pass before it can merge, and
+   your branch must be up to date with `main`.
+
+Contributions are licensed under the project's [Apache-2.0 license](LICENSE), as described in its
+section 5. You keep the copyright to your work.
+
+The rest of this guide covers the engineering rules the project follows. The core promise is
+**0% false-success** (`SPEC-005 §18`): the app never claims a mod works unless it was checked.
 
 ## The specs are the contract
 
@@ -16,7 +39,7 @@ engineering contract. Don't edit them to reflect implementation drift — instea
   (`phaseN-<topic>`), open a PR, merge, delete.
 - **Conventional Commits**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`,
   `ci:`. Reference the work item: e.g. `feat(state): reference resolution (impl:phase1/0002)`.
-- No direct commits to `main`.
+- No direct commits to `main`: it is protected, and every change goes through a pull request.
 
 ## Definition of Done (`SPEC-006`)
 
@@ -65,5 +88,6 @@ cargo run -p amc-cli -- bench benchmarks/ --json
 
 ## Toolchain
 
-- Rust stable (see `rust-toolchain.toml` when added), `cargo fmt`, `cargo clippy`.
+- Rust stable for the engine (pinned in `rust-toolchain.toml`); the desktop app pins nightly in
+  `apps/desktop/src-tauri/rust-toolchain.toml`. Plus `cargo fmt` and `cargo clippy`.
 - Phase 3+: JDK 21 (Temurin), Gradle wrapper (ADR-0003).

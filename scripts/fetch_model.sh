@@ -8,8 +8,8 @@
 # sha256 and the contract/grammar this engine embeds → `amc model verify` checks all of it.
 #
 # Usage:  ./scripts/fetch_model.sh [dest-dir]       (default models/<name>)
-# Auth:   only needed while the Hugging Face repo is private — uses $HF_TOKEN, else the token saved by
-#         `hf auth login` (~/.cache/huggingface/token). Public repos need nothing.
+# Auth:   none needed (the model is public). If set, $HF_TOKEN (or the token saved by `hf auth login`)
+#         is sent, e.g. to test a private pre-release model.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

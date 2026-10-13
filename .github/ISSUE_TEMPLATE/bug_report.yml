@@ -1,0 +1,75 @@
+name: Bug report
+description: Something went wrong in the app, the engine, or a mod it made.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this! Security problems go through
+        [private reporting](https://github.com/sjdthree/ai-mod-creator/security/policy) instead.
+  - type: textarea
+    id: request
+    attributes:
+      label: What did you type?
+      description: The exact sentence you asked for, copied if you can.
+      placeholder: a ruby sword called Ruby Blade with 1200 durability and 9 damage
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened?
+      description: What you saw, including any error message. Screenshots help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: From the release you downloaded, e.g. 0.3.0-alpha.3. Write "source" plus the commit if you built it yourself.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Computer
+      options:
+        - macOS (Apple Silicon)
+        - Windows 11
+        - Windows 10
+        - Linux (built from source)
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where did it go wrong?
+      description: Your best guess is fine.
+      options:
+        - Installing or opening the app
+        - The AI understood my request wrong
+        - Building the mod
+        - Quick Test / Play
+        - Exporting to my own Minecraft
+        - In the game itself
+        - Not sure
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional)
+      description: Anything from the app's log or the terminal. It will be formatted as code.
+      render: text
+  - type: checkboxes
+    id: false-success
+    attributes:
+      label: Did it say it worked when it didn't?
+      description: These are our top-priority bugs.
+      options:
+        - label: Yes, the app reported success but the mod didn't work as described
