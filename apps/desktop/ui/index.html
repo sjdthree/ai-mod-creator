@@ -55,6 +55,9 @@
     width: 100%; margin-top: 6px; padding: 8px 10px; background: var(--panel-2); color: var(--ink);
     border: 1px solid var(--edge); border-radius: 8px; font: inherit;
   }
+  /* `hidden` must win over the display: flex / inline-flex set on .actions, .suggest and buttons below,
+     or a hidden row (e.g. the failure actions after a success) still shows. */
+  [hidden] { display: none !important; }
   .items { flex: 1; overflow-y: auto; padding: 8px 10px 12px; min-height: 0; }
   .items .hd { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); padding: 6px 6px; display: flex; justify-content: space-between; }
   .card {
@@ -62,6 +65,9 @@
     border: 1px solid transparent;
   }
   .card:hover { background: var(--panel-2); border-color: var(--edge); }
+  .card.fresh { animation: fresh 2.4s ease-out; }
+  @keyframes fresh { 0%, 40% { background: color-mix(in srgb, var(--ok) 22%, transparent); border-color: var(--ok); } }
+  @media (prefers-reduced-motion: reduce) { .card.fresh { animation: none; border-color: var(--ok); } }
   .card canvas { width: 34px; height: 34px; image-rendering: pixelated; background: var(--panel-2); border: 1px solid var(--edge); border-radius: 6px; }
   .card .nm { font-weight: 600; font-size: 14px; }
   .card .ty { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
@@ -143,7 +149,7 @@
   .result .bar .big { width: 46px; height: 46px; image-rendering: pixelated; border-radius: 8px; border: 1px solid var(--edge); background: var(--panel-2); }
   .result .bar .t { font-weight: 700; font-size: 16px; }
   .result .bar .d { color: var(--muted); font-size: 13px; }
-  .badge { font-family: var(--mono); font-size: 11px; padding: 4px 9px; border-radius: 20px; letter-spacing: .4px; }
+  .badge { font-family: var(--mono); font-size: 11px; padding: 4px 9px; border-radius: 20px; letter-spacing: .4px; white-space: nowrap; }
   .badge.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
   .badge.warn { color: var(--work); background: color-mix(in srgb, var(--work) 16%, transparent); }
   .badge.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 16%, transparent); }
@@ -322,6 +328,8 @@ function drawIcon(cv, kind, seed=137) {
   }
 }
 const kindOf = t => ({weapon:"sword",tool:"pickaxe",food:"food",item:"gem",block:"block"}[t] || "gem");
+// The vanilla creative tab the generator puts each kind in (amc-generator `vanilla_tab`), at the end of the tab.
+const tabOf = t => ({weapon:"Combat",tool:"Tools & Utilities",food:"Food & Drinks",block:"Building Blocks",item:"Ingredients"}[t] || "Ingredients");
 const emojiOf = t => ({weapon:"🗡",tool:"⛏",food:"🍎",item:"💎",block:"🧱"}[t] || "▪");
 function seedOf(s){ let h=0x811c9dc5>>>0; for (const ch of s){ h^=ch.charCodeAt(0); h=Math.imul(h,0x01000193)>>>0; } return h; }
 
@@ -380,20 +388,30 @@ const $ = s => document.querySelector(s);
 const STAGES = [["intent"],["validate"],["state"],["generate"],["build"],["verify"]];
 let current = { project: "rubysword", busy: false, lastResult: null, refine: null };
 
-// Guess the creation's name + type from the request, so the UI can name it while the real build runs.
+// Guess the creation's type (and its name, when the request says "called X") so the UI can label the
+// run while the real build happens. Without an explicit name the model picks one, so we say "your
+// pickaxe" rather than invent a name; handleResult swaps in the real name when the engine answers.
 function inferCreation(text){
-  const type = /\b(sword|blade|dagger|katana|weapon|mace)\b/i.test(text) ? "weapon"
-    : /\b(pickaxe|shovel|spade|hoe|axe|tool|drill)\b/i.test(text) ? "tool"
-    : /\b(apple|food|berry|bread|stew|pie|eat|edible|hunger|snack|meal)\b/i.test(text) ? "food"
-    : /\b(block|ore|stone|brick|plank|log)\b/i.test(text) ? "block" : "item";
-  let m = text.match(/(?:called|named)\s+["“]?([A-Za-z][\w' ]*?)["”]?(?:\s+(?:with|that|,|\.)|$)/i);
-  let name = m ? m[1].trim() : "";
-  if (!name){
-    const words = text.replace(/[^a-zA-Z ]/g," ").split(/\s+/)
-      .filter(w=>w.length>2 && !/^(the|and|with|that|make|create|give|add|new|for|has|does|can|really|very|super)$/i.test(w));
-    name = words.slice(-2).map(w=>w[0].toUpperCase()+w.slice(1)).join(" ") || "your creation";
+  const KINDS = [
+    ["weapon", /\b(sword|blade|dagger|katana|weapon|mace)\b/i],
+    ["tool",   /\b(pickaxe|shovel|spade|hoe|axe|tool|drill)\b/i],
+    ["food",   /\b(apple|food|berry|bread|stew|pie|tart|cake|eat|edible|hunger|snack|meal)\b/i],
+    ["block",  /\b(block|ore|stone|brick|plank|log|lantern)\b/i],
+  ];
+  let type = "item", noun = "creation";
+  // The last matching word is the head noun: "a titanium drill pickaxe" is a pickaxe.
+  for (const [t, re] of KINDS){
+    const all = text.match(new RegExp(re.source, "gi"));
+    if (all){ type = t; noun = all[all.length-1].toLowerCase(); break; }
   }
-  return { name, type };
+  const m = text.match(/(?:called|named)\s+["“]?([A-Za-z][\w' ]*?)["”]?(?:\s+(?:with|that)\b|\s*[,.]|$)/i);
+  return { name: m ? m[1].trim() : `your ${noun}`, type };
+}
+// The creation a successful request made or changed, as the engine reported it: the display name and
+// type from its create_concept / update_concept operation. Null when the operations don't say.
+function createdFromOps(ops){
+  const op = (ops||[]).find(o => o && o.operation === "create_concept" && o.payload && o.payload.display_name);
+  return op ? { name: op.payload.display_name, type: op.payload.concept_type } : null;
 }
 function stageLabel(k, name){
   const N = name || "it";
@@ -526,6 +544,13 @@ function showBanner(icon, iconSeed, title, desc, badgeText, badgeClass){
   $("#failsuggest").hidden = true;                // suggestions populated by handleResult on failure
   $("#result").hidden = false;
 }
+// Point at a creation in the sidebar (scroll to it and pulse it) so a new or changed one is easy to spot.
+function flashCard(name){
+  const card = [...document.querySelectorAll("#itemlist .card")].find(c => c.dataset.name === name);
+  if (!card) return;
+  card.classList.remove("fresh"); void card.offsetWidth; card.classList.add("fresh");
+  card.scrollIntoView({block:"nearest"});
+}
 function setRunHeadTitle(kind, seed, title){ drawIcon($("#runic"), kind, seed); $("#runtitle").textContent = title; }
 async function handleResult(states, res, prov){
   prov = prov || { name: "your creation", type: "item" };
@@ -550,7 +575,9 @@ async function handleResult(states, res, prov){
       return;
     }
     const isCreate = action === "created";
+    const made = createdFromOps(res.operations);
     const it = res.item
+      || (made && (ITEMS.find(x=>x.name===made.name) || made))
       || (newName && ITEMS.find(x=>x.name===newName))
       || ITEMS.find(x=>x.name===current.refine)
       || { name: newName || current.refine || prov.name, type: prov.type };
@@ -558,10 +585,11 @@ async function handleResult(states, res, prov){
     const Cap = action.charAt(0).toUpperCase() + action.slice(1); // Created / Updated / Renamed
     setRunHeadTitle(kindOf(it.type), seedOf(it.name), `${Cap} ${it.name}`);
     showBanner(kindOf(it.type), seedOf(it.name), `${emojiOf(it.type)}  ${it.name}`,
-      isCreate ? `Your ${it.type} “${it.name}” is built and verified in Minecraft — it's in your creations, left. Quick-test it or add it to your Minecraft.`
+      isCreate ? `Your ${it.type} “${it.name}” is built and verified in Minecraft — it's in your creations, left. Quick-test it or add it to your Minecraft; in the game, press E and look at the end of the ${tabOf(it.type)} tab, or search “${it.name}”.`
                : `Your ${it.type} “${it.name}” was ${action} and re-verified in Minecraft — it's in your creations, left.`,
       isCreate ? "verified ✓" : `${action} ✓`, "ok");
     if (!isCreate && it.name) selectRefine(it.name);
+    flashCard(it.name);
     $("#req").value = "";
     return;
   }
@@ -757,7 +785,8 @@ async function doPlay(){
   }
   // Tell the player what's in the sandbox — non-modally — so if the thing they just tried isn't listed
   // (e.g. the last request failed), they see it, without a dialog that could freeze the app.
-  let heads = `Launching sandbox with: ${names.join(", ")}.  In-world you're auto-Creative — press E → Combat/Tools/Building tab, or search a name.`;
+  const where = ITEMS.map(x=>`${x.name} → ${tabOf(x.type)}`).join(", ");
+  let heads = `Launching sandbox with: ${where}.  In the world you're in Creative: press E, open that tab and scroll to the end, or use the search tab (compass) and type a name.`;
   if (current.lastCreateOk === false && current.lastText){
     heads += `  ⚠ Your last request (“${current.lastText}”) didn't succeed, so it's not included.`;
   }
@@ -789,8 +818,8 @@ async function doPlay(){
       $("#enginestat").textContent = "sandbox still starting";
       toast(res.detail || "Minecraft is still starting.", "warn", 12000);
     } else {
-      $("#enginestat").textContent = "sandbox open — find your items in the Combat/Tools tabs";
-      toast("Sandbox is open. Find your items in the Combat / Tools / Building-Blocks tab (or search).", null, 8000);
+      $("#enginestat").textContent = "sandbox open — in a world, press E to find your items";
+      toast("Sandbox is open. Create or open a world (you join in Creative), press E, and find your items at the end of their tab (or search a name).", null, 10000);
     }
   } catch(e){
     // The backend surfaces real build/launch failures instead of pretending it launched.

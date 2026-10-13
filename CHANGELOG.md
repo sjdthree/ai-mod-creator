@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+- **Desktop:** after a create, the result card and sidebar use the name the engine gave the creation
+  (it showed a guessed name like "Pickaxe Durability"), and the new creation is highlighted in the
+  sidebar. A successful create no longer shows the failure buttons, including an empty green one.
+  The result card and Quick Test say which creative tab each creation is in.
+
 ## [0.3.0-alpha.3] — 2026-10-13
 
 - **Renamed throughout to AI-mod creator / AMC.** The CLI is now `amc`, environment variables are
