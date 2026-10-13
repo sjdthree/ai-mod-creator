@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/schemas/0.1.0/appearance.schema.json",
+  "$id": "https://amc.dev/schemas/0.1.0/appearance.schema.json",
   "title": "MCL Appearance Document",
   "description": "Canonical appearance document (SPEC-004 §17).",
   "type": "object",

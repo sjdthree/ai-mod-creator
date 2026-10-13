@@ -29,7 +29,7 @@ else
 fi
 
 step "benchmark runner — empty-suite smoke"
-cargo run -q -p mce-cli -- bench benchmarks/ --json >/dev/null
+cargo run -q -p amc-cli -- bench benchmarks/ --json >/dev/null
 # Clean up the report this smoke run just produced (reports are gitignored anyway).
 rm -rf benchmarks/reports/run-* 2>/dev/null || true
 

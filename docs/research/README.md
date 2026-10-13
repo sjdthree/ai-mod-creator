@@ -10,6 +10,6 @@ loader (Fabric) costs, and the multi-loader seam it needs → ADR-0007 (multi-lo
 
 ## Diagnostics / LSP
 
-[`lsp-architecture-assessment.md`](./lsp-architecture-assessment.md) — whether MCE should expose an
+[`lsp-architecture-assessment.md`](./lsp-architecture-assessment.md) — whether AMC should expose an
 LSP. Conclusion: MCL is JSON operations, not a DSL; adopt a shared Diagnostic model rather than an
 LSP server.

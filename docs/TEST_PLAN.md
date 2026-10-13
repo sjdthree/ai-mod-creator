@@ -1,4 +1,4 @@
-# MCE Test Plan — full system, multi-loader
+# AMC Test Plan — full system, multi-loader
 
 *Living document. Started 2026-07-22 on branch `feat/fabric-loader-support` (PR #18). Covers the
 whole engine through the multi-loader lens (NeoForge default, Fabric scaffold per ADR-0007).*
@@ -31,7 +31,7 @@ which is now **fixed** (see below).
 
 The shell config was cleaned up so JDK 21 is the default for **every** shell type. Root cause: three
 dotfiles disagreed and none set 21 — `~/.zshenv` forced JDK 8 onto all non-interactive shells (what
-`mce`/Gradle inherit), `~/.zshrc` set JDK 17 for interactive terminals, nothing set 21.
+`amc`/Gradle inherit), `~/.zshrc` set JDK 17 for interactive terminals, nothing set 21.
 
 Fix (single source of truth): a new `~/.java-env` sets `JAVA_HOME` to Temurin 21 (idempotent, no PATH
 bloat) and defines a `use-java <version>` switcher; it's sourced from `~/.zshenv` (all zsh) and
@@ -47,8 +47,8 @@ via `setup-java`.
 ### The `JAVA_HOME` gotcha (critical for CLI testing)
 
 The **desktop app** already does the right thing: `java_home()` runs `/usr/libexec/java_home -v 21`
-and injects `JAVA_HOME` into every `mce` invocation (`apps/desktop/src-tauri/src/main.rs`). But when
-we run the **CLI directly** in a shell, `mce` inherits the shell's `JAVA_HOME` — which is **JDK 8**
+and injects `JAVA_HOME` into every `amc` invocation (`apps/desktop/src-tauri/src/main.rs`). But when
+we run the **CLI directly** in a shell, `amc` inherits the shell's `JAVA_HOME` — which is **JDK 8**
 here. Gradle 8.10 can *run* on 8 but it's deprecated and its toolchain must still locate JDK 21 to
 compile. To make CLI tests deterministic and match production, **export JDK 21 before any build/verify
 test**:
@@ -63,18 +63,18 @@ Gradle. (Action item T-1.)
 
 ### Intent model (needed only for tests that go through English → ops)
 
-`mce request` needs an OpenAI-compatible endpoint (`$MCE_INTENT_ENDPOINT`). Two options:
+`amc request` needs an OpenAI-compatible endpoint (`$AMC_INTENT_ENDPOINT`). Two options:
 - **Desktop path:** the bundled `llama-server` sidecar + `ai-mod-create-270smol` gguf (started by the app).
 - **CLI path:** `llama-server` run by hand with the same gguf + grammar (see `docs/GETTING_STARTED.md`).
 
 **For deterministic CLI tests we should avoid the model entirely** where possible (small models are
 non-deterministic across prompts). Two model-free routes already exist:
-1. `mce validate` — applies hand-written ops JSON against state. Proves
+1. `amc validate` — applies hand-written ops JSON against state. Proves
    validate→state without the model.
 2. Generation/build/verify operate on **canonical state**, not English — so a fixture project with a
    committed state exercises generate→build→verify→play with zero model calls.
 
-*Gap:* there is no `mce generate`/offline subcommand to materialize a project from a fixture state
+*Gap:* there is no `amc generate`/offline subcommand to materialize a project from a fixture state
 without going through `request`. A tiny fixture-driven test binary (or a `--from-state <file>` on
 `test`) would make the build/verify tiers fully model-independent. (Action item T-2.)
 
@@ -92,11 +92,11 @@ Fast, hermetic, run on every commit. **Status: green (37 tests).**
 
 | ID | Case | Loader | How |
 |---|---|---|---|
-| U-1 | Generator unit + golden-content tests | both | `cargo test -p mce-generator` |
+| U-1 | Generator unit + golden-content tests | both | `cargo test -p amc-generator` |
 | U-2 | Shared files **byte-identical** across loaders | both | `fabric::tests::shared_vanilla_resources_are_identical_to_neoforge` |
 | U-3 | Output hash deterministic per loader | both | `*::output_hash_is_deterministic` / `output_is_deterministic` |
 | U-4 | `Loader` parse/round-trip + factory target/task | both | `lib::tests::*` |
-| U-5 | Build-log classification, GameTest-log parse | both | `cargo test -p mce-build -p mce-verify` |
+| U-5 | Build-log classification, GameTest-log parse | both | `cargo test -p amc-build -p amc-verify` |
 | U-6 | State/validator/intent units | n/a | `cargo test --workspace` |
 
 Command: `cargo test --workspace` (plus `cargo fmt --check`, `cargo clippy -- -D warnings`).
@@ -127,10 +127,10 @@ The premise-validating tier: **does the generated project actually compile & pac
 |---|---|---|---|
 | B-1 | Clean build → JAR in `build/libs/` | neoforge | `./gradlew --no-daemon build` (baseline; MVP-verified) |
 | B-2 | Clean build → remapped JAR | fabric | `./gradlew --no-daemon build` (**scaffold — under test now**) |
-| B-3 | `discover_jar` finds the right artifact (ignores `-sources`/`-dev`) | both | `mce test` reports a `jar` path |
+| B-3 | `discover_jar` finds the right artifact (ignores `-sources`/`-dev`) | both | `amc test` reports a `jar` path |
 | B-4 | Build-failure classification maps to correct owner | both | inject a bad property, expect `CompileError`/GENERATOR |
 
-Run via CLI (`mce test`) once model-free fixtures exist (T-2), or directly with `./gradlew build`.
+Run via CLI (`amc test`) once model-free fixtures exist (T-2), or directly with `./gradlew build`.
 **Always with `JAVA_HOME=21`.**
 
 *Fabric-specific risks to watch (B-2):* Loom `runs.gametest` config shape, remapped-jar naming under
@@ -153,13 +153,13 @@ ServerBoot → Registry → GameTest → Persistence).
 
 **Fabric V-2 is the gate** for promoting Fabric scaffold → supported. Unknowns to confirm against a
 real run: (a) `fabric-gametest` entrypoint auto-discovers `@GameTest` methods; (b) template-namespace
-resolution finds `data/mce_ruby/structure/empty.nbt`; (c) the `runGametest` task name and its exit
+resolution finds `data/amc_ruby/structure/empty.nbt`; (c) the `runGametest` task name and its exit
 code / summary lines match what `parse_gametest_log` expects. If the summary format differs, the
 parser needs a Fabric branch.
 
 ---
 
-## 5. Tier 4 — client smoke (`mce play`)
+## 5. Tier 4 — client smoke (`amc play`)
 
 | ID | Case | Loader | Notes |
 |---|---|---|---|
@@ -172,20 +172,20 @@ parser needs a Fabric branch.
 ## 6. Tier 5 — GUI / full system (Tauri desktop app)
 
 The desktop app (`apps/desktop`) is a thin shell: 12 Tauri commands each shell out to bundled
-`mce --json`. Testing it = testing the IPC layer + the CLI it drives + the model server bring-up.
+`amc --json`. Testing it = testing the IPC layer + the CLI it drives + the model server bring-up.
 
 ### 6a. Command coverage (map each Tauri command to a CLI path)
 
 | Command | Drives | Test |
 |---|---|---|
 | `list_projects` | scans projects home | empty + N projects |
-| `init_project` | `mce init` | creates `.mce/state.json` |
-| `list_items` | `mce list --json` | reflects committed concepts |
-| `request` | `mce request` | English → verified creation (needs model) |
-| `undo` | `mce undo` | reverts last change |
+| `init_project` | `amc init` | creates `.amc/state.json` |
+| `list_items` | `amc list --json` | reflects committed concepts |
+| `request` | `amc request` | English → verified creation (needs model) |
+| `undo` | `amc undo` | reverts last change |
 | `install_neoforge` | downloads/points a MC loader | **NeoForge-only today** |
-| `minecraft_info` / `pick_mods_folder` / `export` | `mce export` | JAR lands in mods folder |
-| `play` | `mce play` | launches client |
+| `minecraft_info` / `pick_mods_folder` / `export` | `amc export` | JAR lands in mods folder |
+| `play` | `amc play` | launches client |
 | `model_status` / `start_model` | llama-server sidecar | model reachable |
 
 ### 6b. Model bring-up
@@ -199,17 +199,17 @@ The desktop app (`apps/desktop`) is a thin shell: 12 Tauri commands each shell o
   play → export. Record pass/fail per step.
 - **Automated:** drive the WebView UI (`apps/desktop/ui/index.html`) via a browser-automation MCP or
   Tauri's WebDriver (`tauri-driver`); assert on the rendered result JSON. Heavier setup.
-- **IPC-level:** call the Tauri commands directly in a Rust integration test with a fake/echo `mce`
-  on `$MCE_BIN`, asserting arg construction and JSON parsing without a real build. (Cheapest signal
+- **IPC-level:** call the Tauri commands directly in a Rust integration test with a fake/echo `amc`
+  on `$AMC_BIN`, asserting arg construction and JSON parsing without a real build. (Cheapest signal
   for the shell logic; recommended first.)
 
 ### 6d. GUI gaps this branch surfaces (multi-loader)
 
 1. **No loader selector.** `request`/`play` don't pass `--loader`; the GUI is NeoForge-only. Add a
-   loader toggle → thread `--loader` into `run_mce` args. (Action item T-4.)
+   loader toggle → thread `--loader` into `run_amc` args. (Action item T-4.)
 2. **`install_neoforge` is loader-specific.** Fabric needs an `install_fabric` equivalent (or a
    loader-parameterized installer). (Action item T-5.)
-3. The bundled `mce` sidecar must be rebuilt from this branch before the GUI can target Fabric.
+3. The bundled `amc` sidecar must be rebuilt from this branch before the GUI can target Fabric.
 
 ---
 
@@ -219,7 +219,7 @@ The desktop app (`apps/desktop`) is a thin shell: 12 Tauri commands each shell o
 - **Tier 0:** `cargo build --workspace --all-targets` clean, clippy clean, **37 tests pass**.
 - **Tier 1:** both loaders generate complete trees (NeoForge + Fabric verified by eye and tests).
 - **Tier 2 (B-2, Fabric Loom build): PASS.** A real `./gradlew build` (Loom 1.7.4, Mojang mappings,
-  JDK 21) compiled and packaged a remapped `mce_ruby-0.1.0.jar`. The first attempt **failed** and
+  JDK 21) compiled and packaged a remapped `amc_ruby-0.1.0.jar`. The first attempt **failed** and
   caught a genuine scaffold bug: vanilla `SwordItem.createAttributes(Tier, int, float)` takes an
   **int** damage bonus, but NeoForge patched it to a `float` — the Fabric generator had copied the
   `8.0F` float literal. Fixed to emit an int (`fabric.rs`), locked in by a regression assertion, and

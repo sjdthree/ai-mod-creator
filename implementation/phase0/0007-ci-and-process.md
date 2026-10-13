@@ -24,7 +24,7 @@ false-success), §17 (failure ownership).
 ## Implementation Notes
 
 - `.github/workflows/ci.yml`: `fmt --check`, `clippy -D warnings`, `cargo test --workspace`,
-  and `mce bench benchmarks/ --json` on the empty suite. Model-candidate / nightly / RC tiers
+  and `amc bench benchmarks/ --json` on the empty suite. Model-candidate / nightly / RC tiers
   are documented placeholder jobs enabled in later phases.
 - Process: `CONTRIBUTING.md`, `CHANGELOG.md`, `CODEOWNERS`, `.github/ISSUE_TEMPLATE/*`,
   `.github/pull_request_template.md`, `docs/adr/*`, `docs/traceability.md`.

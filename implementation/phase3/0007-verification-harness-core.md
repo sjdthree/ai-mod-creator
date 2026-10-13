@@ -1,4 +1,4 @@
-# 0007 — Verification Harness core (mce-verify)
+# 0007 — Verification Harness core (amc-verify)
 
 - **Phase:** 3
 - **Workstream:** mc-integration / qa
@@ -17,7 +17,7 @@ client smoke) plug into this and are exercised in the env-gated items `0002`–`
 
 `SPEC-003 §11` (harness responsibilities/prohibitions), `SPEC-005 §15` (levels 1–6), §17 (failure
 ownership), §18 (false success = 0%). `SPEC-004 §32` (verification requirements — produced by
-`mce-state`).
+`amc-state`).
 
 ## Dependencies
 
@@ -49,4 +49,4 @@ ownership), §18 (false success = 0%). `SPEC-004 §32` (verification requirement
 ## Traceability
 
 - Product requirement(s): `FR-005`, `NFR-003`; false-success `SPEC-005 §18`.
-- Component(s): `mce-verify`, consumes `mce-state` requirements + `mce-build` result.
+- Component(s): `amc-verify`, consumes `amc-state` requirements + `amc-build` result.

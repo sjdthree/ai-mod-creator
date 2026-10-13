@@ -1,0 +1,27 @@
+[package]
+name = "amc-cli"
+description = "The `amc` command-line interface: orchestration and the user-facing command surface (SPEC-003 §3)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "amc"
+path = "src/main.rs"
+
+[dependencies]
+amc-core.workspace = true
+amc-bench.workspace = true
+amc-state.workspace = true
+amc-validator.workspace = true
+amc-schema.workspace = true
+amc-intent.workspace = true
+amc-generator.workspace = true
+amc-build.workspace = true
+amc-verify.workspace = true
+amc-launch.workspace = true
+clap.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true

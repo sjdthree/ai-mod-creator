@@ -1,0 +1,16 @@
+[package]
+name = "amc-intent"
+description = "Intent Adapter runtime bridge: English -> MCL operations via the promoted local model over an OpenAI-compatible endpoint (SPEC-003 §4)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+amc-core.workspace = true
+amc-schema.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+ureq.workspace = true

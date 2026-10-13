@@ -1,6 +1,6 @@
 // AI-mod creator — desktop app backend.
 //
-// A thin Tauri shell over the `mce` engine: each command shells out to the `mce` CLI with `--json`
+// A thin Tauri shell over the `amc` engine: each command shells out to the `amc` CLI with `--json`
 // (so the app and the CLI can never drift), runs the heavy pipeline off the UI thread, and points
 // the toolchain at the host JDK 21. The frontend (../ui) is the same web UI that runs standalone.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 use tauri_plugin_dialog::DialogExt;
 
 /// Suppress the console window Windows pops up when this GUI app spawns a console subprocess (the
-/// `mce` engine, `llama-server`, `curl`, `java`). Without it every action flashes a terminal; with a
+/// `amc` engine, `llama-server`, `curl`, `java`). Without it every action flashes a terminal; with a
 /// windowless engine, its own child tools (`gradlew.bat`, `java`) stay windowless too. No-op off Windows.
 fn hide_console(cmd: &mut Command) -> &mut Command {
     #[cfg(windows)]
@@ -39,12 +39,12 @@ fn minecraft_mods_default() -> PathBuf {
     }
 }
 
-/// Where the app keeps projects: `$MCE_PROJECTS_DIR`, else `~/ai-mod-creator` (moved from the
+/// Where the app keeps projects: `$AMC_PROJECTS_DIR`, else `~/ai-mod-creator` (moved from the
 /// pre-rename `~/ModCreationEngine` on first run). Having one stable
 /// home means a project name always resolves the same way regardless of the app's working directory
 /// (the bug this fixes: bare `--project name` was resolved against the app bundle's CWD).
 fn projects_root() -> PathBuf {
-    if let Ok(d) = std::env::var("MCE_PROJECTS_DIR") {
+    if let Ok(d) = std::env::var("AMC_PROJECTS_DIR") {
         return PathBuf::from(d);
     }
     let home = std::env::var("HOME")
@@ -93,19 +93,19 @@ fn bundled_dirs() -> Vec<PathBuf> {
     dirs
 }
 
-/// Path to the `mce` binary: `$MCE_BIN`, else bundled next to the app / in Resources, else `mce` on PATH.
-fn mce_bin() -> String {
-    if let Ok(p) = std::env::var("MCE_BIN") {
+/// Path to the `amc` binary: `$AMC_BIN`, else bundled next to the app / in Resources, else `amc` on PATH.
+fn amc_bin() -> String {
+    if let Ok(p) = std::env::var("AMC_BIN") {
         return p;
     }
-    let name = if cfg!(windows) { "mce.exe" } else { "mce" };
+    let name = if cfg!(windows) { "amc.exe" } else { "amc" };
     for dir in bundled_dirs() {
         let side = dir.join(name);
         if side.exists() {
             return side.display().to_string();
         }
     }
-    "mce".to_string()
+    "amc".to_string()
 }
 
 /// A **JDK 21** for the Gradle build. NeoForge requires 21, so we do NOT blindly trust `$JAVA_HOME`
@@ -171,13 +171,13 @@ fn java_home() -> Option<String> {
 /// `8080` — that's a public well-known slot other tools (LM Studio, etc.) grab, and talking to the
 /// wrong model there produces silently-wrong mods. The app owns this port and starts our model on it.
 fn intent_port() -> u16 {
-    std::env::var("MCE_INTENT_PORT")
+    std::env::var("AMC_INTENT_PORT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(8770)
 }
 
-/// The chat-completions URL for our model server — handed to `mce` via `$MCE_INTENT_ENDPOINT` so the
+/// The chat-completions URL for our model server — handed to `amc` via `$AMC_INTENT_ENDPOINT` so the
 /// engine always talks to the model WE started, never whatever happens to be on `8080`.
 fn intent_endpoint() -> String {
     format!("http://127.0.0.1:{}/v1/chat/completions", intent_port())
@@ -195,23 +195,23 @@ fn model_reachable() -> bool {
 }
 
 /// The model this app ships with (from the repo's `model.lock`) — the directory name under `models/`.
-const PROMOTED_MODEL: &str = env!("MCE_MODEL_NAME");
+const PROMOTED_MODEL: &str = env!("AMC_MODEL_NAME");
 
-/// The source checkout, when running from a dev build (`<repo>/target/{debug,release}/mce`).
+/// The source checkout, when running from a dev build (`<repo>/target/{debug,release}/amc`).
 fn repo_root() -> Option<PathBuf> {
-    PathBuf::from(mce_bin())
+    PathBuf::from(amc_bin())
         .parent()
         .and_then(|p| p.parent())
         .and_then(|p| p.parent())
         .map(Path::to_path_buf)
 }
 
-/// The MCE Model directory: `mce-model.json` + the GGUF it names (+ an optional `adapter/` for the MLX
+/// The AMC Model directory: `amc-model.json` + the GGUF it names (+ an optional `adapter/` for the MLX
 /// fallback). The model is distributed separately from the engine, so this is the one place the app
-/// looks for it: `$MCE_MODEL_DIR`, then bundled (`models/<promoted>` next to the app / in Resources),
+/// looks for it: `$AMC_MODEL_DIR`, then bundled (`models/<promoted>` next to the app / in Resources),
 /// then a dev checkout's `models/<promoted>` (gitignored; fetched by `scripts/fetch_model.sh`).
 fn model_dir() -> Option<PathBuf> {
-    if let Ok(d) = std::env::var("MCE_MODEL_DIR") {
+    if let Ok(d) = std::env::var("AMC_MODEL_DIR") {
         let p = PathBuf::from(d);
         if p.exists() {
             return Some(p);
@@ -227,9 +227,9 @@ fn model_dir() -> Option<PathBuf> {
     cands.into_iter().find(|p| p.exists())
 }
 
-/// The fine-tuned LoRA adapter for the MLX fallback runtime: `$MCE_ADAPTER_DIR`, else `<model dir>/adapter`.
+/// The fine-tuned LoRA adapter for the MLX fallback runtime: `$AMC_ADAPTER_DIR`, else `<model dir>/adapter`.
 fn adapter_dir() -> Option<PathBuf> {
-    if let Ok(d) = std::env::var("MCE_ADAPTER_DIR") {
+    if let Ok(d) = std::env::var("AMC_ADAPTER_DIR") {
         let p = PathBuf::from(d);
         if p.exists() {
             return Some(p);
@@ -240,10 +240,10 @@ fn adapter_dir() -> Option<PathBuf> {
         .filter(|p| p.exists())
 }
 
-/// How to launch `mlx_lm.server`: `$MCE_MODEL_CMD` (an explicit program), else `mlx_lm.server` on PATH,
+/// How to launch `mlx_lm.server`: `$AMC_MODEL_CMD` (an explicit program), else `mlx_lm.server` on PATH,
 /// else the common radioconda install, else `python3 -m mlx_lm.server`. Returns (program, leading args).
 fn model_server_cmd() -> (String, Vec<String>) {
-    if let Ok(c) = std::env::var("MCE_MODEL_CMD") {
+    if let Ok(c) = std::env::var("AMC_MODEL_CMD") {
         return (c, vec![]);
     }
     // radioconda/miniconda install location we know works on this machine.
@@ -261,28 +261,28 @@ fn model_server_cmd() -> (String, Vec<String>) {
     }
 }
 
-/// The quantized MCE Model GGUF — the **no-Python** runtime (served by llama.cpp). `$MCE_MODEL_GGUF`,
+/// The quantized AMC Model GGUF — the **no-Python** runtime (served by llama.cpp). `$AMC_MODEL_GGUF`,
 /// else the file the model directory's manifest names.
 fn gguf_path() -> Option<PathBuf> {
-    if let Ok(p) = std::env::var("MCE_MODEL_GGUF") {
+    if let Ok(p) = std::env::var("AMC_MODEL_GGUF") {
         let p = PathBuf::from(p);
         if p.exists() {
             return Some(p);
         }
     }
     let dir = model_dir()?;
-    let name = std::fs::read_to_string(dir.join("mce-model.json"))
+    let name = std::fs::read_to_string(dir.join("amc-model.json"))
         .ok()
         .and_then(|t| serde_json::from_str::<Value>(&t).ok())
         .and_then(|m| m["gguf"].as_str().map(str::to_string))?;
     Some(dir.join(name)).filter(|p| p.exists())
 }
 
-/// Check the model directory's manifest against the engine (`mce model verify`): a model trained on a
+/// Check the model directory's manifest against the engine (`amc model verify`): a model trained on a
 /// different contract or grammar than this engine embeds produces silently-wrong operations, so refuse
 /// it up front. Weights hashes are checked at staging time, so startup skips re-hashing them.
 fn model_compatible(dir: &Path) -> Result<(), String> {
-    let out = hide_console(Command::new(mce_bin()).args([
+    let out = hide_console(Command::new(amc_bin()).args([
         "--json",
         "model",
         "verify",
@@ -312,9 +312,9 @@ fn model_compatible(dir: &Path) -> Result<(), String> {
 
 /// The GBNF grammar that constrains the model to well-formed, bounded JSON (no truncated output, no
 /// runaway decimals) — the robustness backstop so ANY request parses. Engine-owned (the model manifest
-/// pins its hash). `$MCE_GRAMMAR`, then bundled, then the dev checkout's `crates/mce-intent/contract/`.
+/// pins its hash). `$AMC_GRAMMAR`, then bundled, then the dev checkout's `crates/amc-intent/contract/`.
 fn grammar_path() -> Option<PathBuf> {
-    if let Ok(p) = std::env::var("MCE_GRAMMAR") {
+    if let Ok(p) = std::env::var("AMC_GRAMMAR") {
         let p = PathBuf::from(p);
         if p.exists() {
             return Some(p);
@@ -322,18 +322,18 @@ fn grammar_path() -> Option<PathBuf> {
     }
     let mut cands: Vec<PathBuf> = bundled_dirs()
         .into_iter()
-        .map(|d| d.join("mce-ops.gbnf"))
+        .map(|d| d.join("amc-ops.gbnf"))
         .collect();
     if let Some(repo) = repo_root() {
-        cands.push(repo.join("crates/mce-intent/contract/mce-ops.gbnf"));
+        cands.push(repo.join("crates/amc-intent/contract/amc-ops.gbnf"));
     }
     cands.into_iter().find(|p| p.exists())
 }
 
-/// A native `llama-server` (llama.cpp) binary — the no-Python model runtime. `$MCE_LLAMA_SERVER`,
+/// A native `llama-server` (llama.cpp) binary — the no-Python model runtime. `$AMC_LLAMA_SERVER`,
 /// then bundled beside the app, then Homebrew, then PATH.
 fn llama_server_bin() -> Option<String> {
-    if let Ok(p) = std::env::var("MCE_LLAMA_SERVER") {
+    if let Ok(p) = std::env::var("AMC_LLAMA_SERVER") {
         if PathBuf::from(&p).exists() {
             return Some(p);
         }
@@ -373,7 +373,7 @@ fn ensure_model() -> Value {
     if model_reachable() {
         return json!({ "state": "running" });
     }
-    let log = std::env::temp_dir().join("mce-model-server.log");
+    let log = std::env::temp_dir().join("amc-model-server.log");
     let out = std::fs::File::create(&log).ok();
 
     // A model built for a different contract/grammar must never be served (silently-wrong mods).
@@ -414,7 +414,7 @@ fn ensure_model() -> Value {
         _ => {
             let Some(adapter) = adapter_dir() else {
                 return json!({ "state": "unavailable",
-                    "detail": "no AI model found — fetch it with scripts/fetch_model.sh or set MCE_MODEL_DIR" });
+                    "detail": "no AI model found — fetch it with scripts/fetch_model.sh or set AMC_MODEL_DIR" });
             };
             let (prog, mut args) = model_server_cmd();
             args.extend([
@@ -429,7 +429,7 @@ fn ensure_model() -> Value {
         }
     };
 
-    eprintln!("[mce-desktop] starting model backend: {backend} via {prog}");
+    eprintln!("[amc-desktop] starting model backend: {backend} via {prog}");
     let mut cmd = Command::new(&prog);
     cmd.args(&args);
     hide_console(&mut cmd);
@@ -446,12 +446,12 @@ fn ensure_model() -> Value {
 }
 
 /// The mod loader the desktop app builds for. **Fabric-first** during the multi-loader rollout —
-/// the app is Fabric-only unless `$MCE_LOADER=neoforge` is set explicitly. Passed as `--loader` on
+/// the app is Fabric-only unless `$AMC_LOADER=neoforge` is set explicitly. Passed as `--loader` on
 /// every engine call so behaviour never depends on how the app was launched.
 /// TODO: replace this default with the user's on-install choice (persisted) once the picker lands
 /// (the eventual first-run loader selection). For now the app is Fabric-first.
 fn active_loader() -> String {
-    match std::env::var("MCE_LOADER")
+    match std::env::var("AMC_LOADER")
         .unwrap_or_default()
         .trim()
         .to_ascii_lowercase()
@@ -463,20 +463,20 @@ fn active_loader() -> String {
     }
 }
 
-/// Run `mce --json --loader <active> <args…>` and parse its JSON result.
-fn run_mce(args: &[String]) -> Result<Value, String> {
-    let mut cmd = Command::new(mce_bin());
+/// Run `amc --json --loader <active> <args…>` and parse its JSON result.
+fn run_amc(args: &[String]) -> Result<Value, String> {
+    let mut cmd = Command::new(amc_bin());
     cmd.arg("--json")
         .args(["--loader".to_string(), active_loader()])
         .args(args);
-    cmd.env("MCE_INTENT_ENDPOINT", intent_endpoint());
+    cmd.env("AMC_INTENT_ENDPOINT", intent_endpoint());
     if let Some(jh) = java_home() {
         cmd.env("JAVA_HOME", jh);
     }
     hide_console(&mut cmd);
     let out = cmd
         .output()
-        .map_err(|e| format!("could not start the engine ({}): {e}", mce_bin()))?;
+        .map_err(|e| format!("could not start the engine ({}): {e}", amc_bin()))?;
     let s = String::from_utf8_lossy(&out.stdout);
     let s = s.trim();
     if s.is_empty() {
@@ -487,17 +487,18 @@ fn run_mce(args: &[String]) -> Result<Value, String> {
 }
 
 /// Off-thread wrapper so the ~minute-long build/verify never freezes the window.
-async fn run_mce_async(args: Vec<String>) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || run_mce(&args))
+async fn run_amc_async(args: Vec<String>) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || run_amc(&args))
         .await
         .map_err(|e| e.to_string())?
 }
 
-/// The names of projects in the projects home (dirs containing an `.mce/state.json`).
+/// The names of projects in the projects home (dirs containing an `.amc/state.json`, or the
+/// pre-rename `.mce/state.json`, which the engine moves to `.amc/` the first time it opens one).
 #[tauri::command]
 fn list_projects() -> Vec<String> {
     eprintln!(
-        "[mce-desktop] IPC ok: list_projects (root={})",
+        "[amc-desktop] IPC ok: list_projects (root={})",
         projects_root().display()
     );
     let root = projects_root();
@@ -505,7 +506,10 @@ fn list_projects() -> Vec<String> {
     let mut v = Vec::new();
     if let Ok(rd) = std::fs::read_dir(&root) {
         for e in rd.flatten() {
-            if e.path().join(".mce").join("state.json").exists() {
+            let p = e.path();
+            if p.join(".amc").join("state.json").exists()
+                || p.join(".mce").join("state.json").exists()
+            {
                 if let Some(n) = e.file_name().to_str() {
                     v.push(n.to_string());
                 }
@@ -521,7 +525,7 @@ fn list_projects() -> Vec<String> {
 fn init_project(name: String) -> Result<Value, String> {
     let root = projects_root();
     std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
-    let mut cmd = Command::new(mce_bin());
+    let mut cmd = Command::new(amc_bin());
     cmd.arg("--json")
         .args(["--loader", &active_loader()])
         .args(["init", &name])
@@ -534,7 +538,7 @@ fn init_project(name: String) -> Result<Value, String> {
 
 #[tauri::command]
 async fn list_items(project: String) -> Result<Value, String> {
-    run_mce_async(vec![
+    run_amc_async(vec![
         "list".into(),
         "--project".into(),
         resolve_project(&project),
@@ -556,18 +560,18 @@ async fn request(
         "--project".into(),
         resolve_project(&project),
     ];
-    // A non-empty refine target scopes this as an UPDATE to that creation (`mce request --refine <name>`),
+    // A non-empty refine target scopes this as an UPDATE to that creation (`amc request --refine <name>`),
     // so an edit like "do 12 damage" targets it instead of colliding on the name as a duplicate create.
     if let Some(t) = refine_target.filter(|t| !t.is_empty()) {
         args.push("--refine".into());
         args.push(t);
     }
-    run_mce_async(args).await
+    run_amc_async(args).await
 }
 
 #[tauri::command]
 async fn undo(project: String) -> Result<Value, String> {
-    run_mce_async(vec![
+    run_amc_async(vec![
         "undo".into(),
         "--project".into(),
         resolve_project(&project),
@@ -575,7 +579,7 @@ async fn undo(project: String) -> Result<Value, String> {
     .await
 }
 
-/// The NeoForge version our generated mods target (must match `mce-generator`'s `NEOFORGE_VERSION`).
+/// The NeoForge version our generated mods target (must match `amc-generator`'s `NEOFORGE_VERSION`).
 /// NeoForge `21.1.x` is the loader for Minecraft **1.21.1**.
 const NEOFORGE_VERSION: &str = "21.1.235";
 
@@ -673,7 +677,7 @@ fn install_neoforge_blocking() -> Result<Value, String> {
 }
 
 // ---- Fabric "Add to my Minecraft" -----------------------------------------------------------
-// Fabric versions our generated mods target — must match `mce-generator`'s fabric constants.
+// Fabric versions our generated mods target — must match `amc-generator`'s fabric constants.
 const MINECRAFT_VERSION: &str = "1.21.1";
 const FABRIC_LOADER_VERSION: &str = "0.16.5";
 const FABRIC_API_VERSION: &str = "0.102.0+1.21.1";
@@ -725,7 +729,7 @@ fn private_download_dir() -> Result<PathBuf, String> {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let dir = std::env::temp_dir().join(format!("mce-dl-{}-{nanos}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("amc-dl-{}-{nanos}", std::process::id()));
     let mut builder = std::fs::DirBuilder::new();
     #[cfg(unix)]
     {
@@ -800,7 +804,13 @@ fn install_fabric_blocking() -> Result<Value, String> {
             Command::new(&java)
                 .arg("-jar")
                 .arg(&jar)
-                .args(["client", "-mcversion", MINECRAFT_VERSION, "-loader", FABRIC_LOADER_VERSION])
+                .args([
+                    "client",
+                    "-mcversion",
+                    MINECRAFT_VERSION,
+                    "-loader",
+                    FABRIC_LOADER_VERSION,
+                ])
                 .arg("-dir")
                 .arg(&mc_dir),
         )
@@ -840,16 +850,12 @@ fn install_fabric_blocking() -> Result<Value, String> {
 #[tauri::command]
 async fn install_loader() -> Result<Value, String> {
     match active_loader().as_str() {
-        "neoforge" => {
-            tauri::async_runtime::spawn_blocking(install_neoforge_blocking)
-                .await
-                .map_err(|e| e.to_string())?
-        }
-        _ => {
-            tauri::async_runtime::spawn_blocking(install_fabric_blocking)
-                .await
-                .map_err(|e| e.to_string())?
-        }
+        "neoforge" => tauri::async_runtime::spawn_blocking(install_neoforge_blocking)
+            .await
+            .map_err(|e| e.to_string())?,
+        _ => tauri::async_runtime::spawn_blocking(install_fabric_blocking)
+            .await
+            .map_err(|e| e.to_string())?,
     }
 }
 
@@ -906,7 +912,7 @@ fn launch_minecraft() -> Result<Value, String> {
     }
 }
 
-/// The mod loader this app session targets, mirroring the CLI's `$MCE_LOADER` resolution (defaults
+/// The mod loader this app session targets, mirroring the CLI's `$AMC_LOADER` resolution (defaults
 /// to NeoForge). Surfaced to the UI so a user can see at a glance whether they're building a
 /// **Fabric** or **NeoForge** mod — otherwise leftover jars from the other loader are indistinguishable.
 #[tauri::command]
@@ -973,7 +979,7 @@ async fn export(project: String, to: Option<String>) -> Result<Value, String> {
         args.push("--to".into());
         args.push(t);
     }
-    run_mce_async(args).await
+    run_amc_async(args).await
 }
 
 /// Launch the visible Minecraft sandbox. We do NOT fire-and-forget: the client build/launch can fail
@@ -985,8 +991,8 @@ async fn play(project: String) -> Result<Value, String> {
     let proj = resolve_project(&project);
     let endpoint = intent_endpoint();
     let jh = java_home();
-    let bin = mce_bin();
-    eprintln!("[mce-desktop] play: {proj}");
+    let bin = amc_bin();
+    eprintln!("[amc-desktop] play: {proj}");
     tauri::async_runtime::spawn_blocking(move || play_watch(bin, proj, endpoint, jh))
         .await
         .map_err(|e| e.to_string())?
@@ -999,13 +1005,20 @@ fn play_watch(
     jh: Option<String>,
 ) -> Result<Value, String> {
     use std::time::Instant;
-    let log = std::env::temp_dir().join("mce-play.log");
+    let log = std::env::temp_dir().join("amc-play.log");
     let file =
         std::fs::File::create(&log).map_err(|e| format!("couldn't open the play log: {e}"))?;
     let err_file = file.try_clone().map_err(|e| e.to_string())?;
     let mut cmd = Command::new(&bin);
-    cmd.args(["--loader", &active_loader(), "play", "--project", &proj, "--interactive"]);
-    cmd.env("MCE_INTENT_ENDPOINT", endpoint);
+    cmd.args([
+        "--loader",
+        &active_loader(),
+        "play",
+        "--project",
+        &proj,
+        "--interactive",
+    ]);
+    cmd.env("AMC_INTENT_ENDPOINT", endpoint);
     if let Some(jh) = jh {
         cmd.env("JAVA_HOME", jh);
     }
@@ -1097,7 +1110,7 @@ fn model_status() -> bool {
 #[tauri::command]
 fn start_model() -> Value {
     let r = ensure_model();
-    eprintln!("[mce-desktop] ensure_model: {r}");
+    eprintln!("[amc-desktop] ensure_model: {r}");
     r
 }
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Build and enter the MCE dev container (JDK 21 + Rust + Gradle + headless-client deps).
+# Build and enter the AMC dev container (JDK 21 + Rust + Gradle + headless-client deps).
 #
 # Everything the container needs lives ONLY in the image and in named Docker volumes
-# (mce-cargo / mce-gradle / mce-target). The host's Java, Gradle, Rust, and other repos are never
+# (amc-cargo / amc-gradle / amc-target). The host's Java, Gradle, Rust, and other repos are never
 # touched. The repo is bind-mounted read-write at /workspace.
 #
 # Usage:
@@ -14,8 +14,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-IMAGE=mce-dev
-VOLUMES=(-v mce-cargo:/home/dev/.cargo/registry -v mce-gradle:/home/dev/.gradle -v mce-target:/home/dev/target)
+IMAGE=amc-dev
+VOLUMES=(-v amc-cargo:/home/dev/.cargo/registry -v amc-gradle:/home/dev/.gradle -v amc-target:/home/dev/target)
 
 build() { docker build --load -t "$IMAGE" -f .devcontainer/Dockerfile .devcontainer; }
 ensure() { docker image inspect "$IMAGE" >/dev/null 2>&1 || build; }
@@ -27,7 +27,7 @@ case "${1:-shell}" in
   gate) run bash -lc './scripts/ci.sh' ;;
   clean)
     docker image rm -f "$IMAGE" 2>/dev/null || true
-    docker volume rm -f mce-cargo mce-gradle mce-target 2>/dev/null || true
+    docker volume rm -f amc-cargo amc-gradle amc-target 2>/dev/null || true
     echo "removed image + cache volumes (host untouched)" ;;
   *) echo "usage: $0 [build|shell|gate|clean]"; exit 2 ;;
 esac

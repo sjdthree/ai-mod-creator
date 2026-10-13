@@ -41,4 +41,4 @@ operation before implementing this.
 
 - Product requirement(s): `FR-004`.
 - MCL element(s): recipe (`SPEC-004 §15`).
-- Component(s): `mce-generator`, `mce-state` (recipe model).
+- Component(s): `amc-generator`, `amc-state` (recipe model).

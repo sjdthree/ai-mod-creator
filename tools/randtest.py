@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end randomized robustness harness for the MCE `request` pipeline.
+"""End-to-end randomized robustness harness for the AMC `request` pipeline.
 
 Proves the invariants the recurring create-vs-update bug violated — *an edit UPDATES the named creation
 and never duplicates it*, plus *rename* and *delete* target exactly the right creation — over inputs
@@ -10,11 +10,11 @@ value here is drawn fresh each run.
 This exercises the FULL pipeline (intent -> validate -> state -> generate -> build), so it needs JDK 21 +
 the Gradle wrapper and is slow — run it manually or nightly, not on every commit. The fast, CI-tier
 version of these same invariants (intent layer only, no Gradle) lives as a Rust test in
-crates/mce-intent/src/randomized_tests.rs and runs under `cargo test`.
+crates/amc-intent/src/randomized_tests.rs and runs under `cargo test`.
 
     Usage:  python tools/randtest.py [N]        # N random items, default 3
     Env:    JAVA_HOME                            # defaults to the Android Studio JBR on Windows
-            MCE_BIN                              # override the mce binary path
+            AMC_BIN                              # override the amc binary path
 """
 import subprocess, json, random, string, os, sys, tempfile, shutil
 from pathlib import Path
@@ -22,18 +22,18 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 
 
-def mce_bin():
-    if os.environ.get("MCE_BIN"):
-        return os.environ["MCE_BIN"]
-    exe = "mce.exe" if os.name == "nt" else "mce"
+def amc_bin():
+    if os.environ.get("AMC_BIN"):
+        return os.environ["AMC_BIN"]
+    exe = "amc.exe" if os.name == "nt" else "amc"
     for prof in ("release", "debug"):
         p = REPO / "target" / prof / exe
         if p.exists():
             return str(p)
-    sys.exit("mce binary not found — run `cargo build --release -p mce-cli` first (or set MCE_BIN)")
+    sys.exit("amc binary not found — run `cargo build --release -p amc-cli` first (or set AMC_BIN)")
 
 
-MCE = mce_bin()
+AMC = amc_bin()
 ENV = dict(os.environ)
 if not ENV.get("JAVA_HOME") and os.name == "nt":
     ENV["JAVA_HOME"] = r"C:\Program Files\Android\Android Studio\jbr"
@@ -46,8 +46,8 @@ MATS = ["ruby", "copper", "diamond", "emerald", "obsidian", "bronze", "gold", "i
 INGREDIENTS = ["stick", "iron", "gold", "diamond", "emerald", "redstone", "coal", "leather", "string"]
 
 
-def mce(args, cwd):
-    r = subprocess.run([MCE, "--json"] + args, capture_output=True, text=True, cwd=cwd, env=ENV)
+def amc(args, cwd):
+    r = subprocess.run([AMC, "--json"] + args, capture_output=True, text=True, cwd=cwd, env=ENV)
     try:
         return json.loads(r.stdout)
     except Exception:
@@ -64,14 +64,14 @@ def rand_name(exclude=()):
 
 
 def items(cwd):
-    d = mce(["list"], cwd)
+    d = amc(["list"], cwd)
     return d if isinstance(d, list) else (d.get("items") or d.get("concepts") or [])
 
 
 def read_state(cwd):
-    """The persisted canonical state (concepts + recipes) — recipes aren't exposed by `mce list`."""
+    """The persisted canonical state (concepts + recipes) — recipes aren't exposed by `amc list`."""
     try:
-        return json.loads((Path(cwd) / ".mce" / "state.json").read_text())
+        return json.loads((Path(cwd) / ".amc" / "state.json").read_text())
     except Exception:
         return {}
 
@@ -106,12 +106,12 @@ def ok_status(res):
 
 def main():
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-    root = Path(tempfile.mkdtemp(prefix="mce-randtest-"))
+    root = Path(tempfile.mkdtemp(prefix="amc-randtest-"))
     proj = root / "P"
-    mce(["init", "P"], root)
+    amc(["init", "P"], root)
     fails = []
     print(f"=== RANDOMIZED e2e: {n} items × create/update/recipe/rename/delete — values generated at runtime ===")
-    print(f"    binary: {MCE}")
+    print(f"    binary: {AMC}")
 
     for i in range(n):
         cat = random.choice(["weapon", "tool", "food"])
@@ -152,15 +152,15 @@ def main():
             return good
 
         # CREATE — new name → a create with the right value.
-        cr = mce(["request", create, "--project", str(proj), "--no-verify"], root)
+        cr = amc(["request", create, "--project", str(proj), "--no-verify"], root)
         c_ok = ok_status(cr) and check("CREATE", name, v1)
 
         # EDIT-FORM UPDATE — a create-shaped definition for the now-existing name must UPDATE, not duplicate.
-        mce(["request", editform, "--project", str(proj), "--no-verify"], root)
+        amc(["request", editform, "--project", str(proj), "--no-verify"], root)
         u1_ok = check("UPDATE-editform", name, v2, extra=lambda: len([c for c in items(proj) if c["name"] == name]) == 1)
 
         # NATURAL UPDATE — prose naming the creation.
-        mce(["request", update, "--project", str(proj), "--no-verify"], root)
+        amc(["request", update, "--project", str(proj), "--no-verify"], root)
         u2_ok = check("UPDATE-natural", name, v3)
 
         # ADD RECIPE — a shapeless recipe crafting the creation from vanilla ingredients (quantities and
@@ -168,26 +168,26 @@ def main():
         q = random.randint(1, 3)
         ing_a, ing_b = random.sample(INGREDIENTS, 2)
         recipe_req = f"craft a {name} from {q} {ing_a} and a {ing_b}"
-        rc = mce(["request", recipe_req, "--project", str(proj), "--no-verify"], root)
+        rc = amc(["request", recipe_req, "--project", str(proj), "--no-verify"], root)
         addr_ok = ok_status(rc) and active_recipes_for(proj, name) == 1
         if not addr_ok:
             fails.append(("ADD-RECIPE", name, f"status={rc.get('status')} recipes={active_recipes_for(proj, name)} req={recipe_req!r}"))
 
         # REMOVE RECIPE — the recipe for the creation is gone (no active recipe targets it).
-        rmr = mce(["request", f"remove the recipe for {name}", "--project", str(proj), "--no-verify"], root)
+        rmr = amc(["request", f"remove the recipe for {name}", "--project", str(proj), "--no-verify"], root)
         rmr_ok = ok_status(rmr) and active_recipes_for(proj, name) == 0
         if not rmr_ok:
             fails.append(("REMOVE-RECIPE", name, f"status={rmr.get('status')} recipes={active_recipes_for(proj, name)}"))
 
         # RENAME — the creation is now known by newname (and no longer by name).
-        rn = mce(["request", f"rename {name} to {newname}", "--project", str(proj), "--no-verify"], root)
+        rn = amc(["request", f"rename {name} to {newname}", "--project", str(proj), "--no-verify"], root)
         names_now = {c["name"] for c in items(proj)}
         r_ok = ok_status(rn) and newname in names_now and name not in names_now
         if not r_ok:
             fails.append(("RENAME", f"{name}->{newname}", f"status={rn.get('status')} names={sorted(names_now)}"))
 
         # DELETE — the creation disappears from the active list.
-        dl = mce(["request", f"delete {newname}", "--project", str(proj), "--no-verify"], root)
+        dl = amc(["request", f"delete {newname}", "--project", str(proj), "--no-verify"], root)
         gone = newname not in {c["name"] for c in items(proj)}
         d_ok = ok_status(dl) and gone
         if not d_ok:

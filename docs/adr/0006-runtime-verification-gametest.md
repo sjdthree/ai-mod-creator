@@ -24,7 +24,7 @@ The generator now emits:
 ## Outcome — success
 
 ```
-Enabled Gametest Namespaces: [mce_ruby_world]
+Enabled Gametest Namespaces: [amc_ruby_world]
 2 tests are now running ...
 ========= 2 GAME TESTS COMPLETE IN 211 ms =========
 All 2 required tests passed :)
@@ -44,7 +44,7 @@ The full runtime loop works: **generated mod → headless GameTest server → te
 - A hand-authored empty structure NBT is sufficient; the heavier `net.neoforged.testframework`
   (`@EmptyTemplate`, `@TestHolder`, `DynamicTest`) is not required for plain assertions.
 - `runGameTestServer` exit code (0 = all required passed) is the clean pass/fail signal for the
-  harness — wired into `mce-verify::gametest`.
+  harness — wired into `amc-verify::gametest`.
 
 ## Consequences
 

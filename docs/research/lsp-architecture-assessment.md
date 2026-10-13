@@ -16,11 +16,11 @@ knowledge, not this repo, and are tagged **[EXTERNAL]**.
 
 - **The premise needs one correction up front.** There is **no textual DSL** in this project, and the
   term "MDM / Mod Description Model" **does not appear anywhere in the code or specs**. The central schema
-  the summary calls the "MDM" is this project's **MCL — Minecraft Creation Language**: a **JSON operations
+  the summary calls the "MDM" is this project's **MCL — Mod Creation Language**: a **JSON operations
   language** (a 15-verb enum) plus a **typed canonical state**, defined by `SPEC-004` and the seven JSON
   Schemas under `schemas/0.1.0/`. Non-programmer creators never edit MCL text; they type **English** in a
   GUI, which an intent model turns into MCL operations, which mutate `state.json`. (`docs/traceability.md:14`,
-  `crates/mce-state/src/model.rs`, `schemas/0.1.0/operation.schema.json`.)
+  `crates/amc-state/src/model.rs`, `schemas/0.1.0/operation.schema.json`.)
 
 - **LSP is a protocol for humans editing *text documents*.** In this product the human never opens a text
   document, and the MCL operations are ephemeral machine artifacts. So the classic LSP surface
@@ -32,7 +32,7 @@ knowledge, not this repo, and are tagged **[EXTERNAL]**.
   message, range, relatedInformation, codeActions}` record — as the internal error contract that both the
   GUI and (future) AI-repair loop consume. But you can adopt that data shape **without** adopting
   LSP-the-server. The validator already emits ~80% of it (`ValidationError { code, path, message,
-  owning_component }`, `crates/mce-validator/src/lib.rs:27-35`); what it lacks is **source positions** and
+  owning_component }`, `crates/amc-validator/src/lib.rs:27-35`); what it lacks is **source positions** and
   **an AI feedback edge** (there is no repair loop today).
 
 - **Recommendation: neither option (a) nor (b) as written.** Adopt the LSP *diagnostic model* as an
@@ -53,13 +53,13 @@ knowledge, not this repo, and are tagged **[EXTERNAL]**.
 
 ## 1. The DSL / MDM: it's MCL (JSON operations + typed state), not a textual DSL
 
-**Terminology check (important):** the project's own name for the central schema is **MCL — Minecraft
-Creation Language** (`docs/traceability.md:14`, `docs/lessons-learned.md:30`, `SPEC-004`). The strings
+**Terminology check (important):** the project's own name for the central schema is **MCL — Mod Creation
+Language** (`docs/traceability.md:14`, `docs/lessons-learned.md:30`, `SPEC-004`). The strings
 "MDM" and "Mod Description Model" appear **nowhere** in the codebase — that is the caller's framing.
 **[INFERENCE]** "MDM" ≙ *MCL operations + canonical state*.
 
 **Schema definition** — `schemas/0.1.0/` holds seven JSON Schema (draft 2020-12) files, all titled
-"MCL …", `$id` base `https://mce.dev/schemas/0.1.0/`:
+"MCL …", `$id` base `https://amc.dev/schemas/0.1.0/`:
 
 | File | Role |
 |---|---|
@@ -72,11 +72,11 @@ Creation Language** (`docs/traceability.md:14`, `docs/lessons-learned.md:30`, `S
 | `transaction.schema.json` | transaction record, 8-state lifecycle enum |
 
 **Parser / validator** — there is no text parser; MCL arrives as `serde_json::Value`. Schema validation
-lives in `crates/mce-schema/src/lib.rs`: schemas are `include_str!`-embedded at compile time (`:29-35`),
+lives in `crates/amc-schema/src/lib.rs`: schemas are `include_str!`-embedded at compile time (`:29-35`),
 `SCHEMA_VERSION = "0.1.0"` (`:14`), entry points `validate(doc_type, &Value)` (`:93-104`) and `is_valid`
-(`:107-109`). Semantic validation is a separate crate (`mce-validator`, see §2).
+(`:107-109`). Semantic validation is a separate crate (`amc-validator`, see §2).
 
-**The canonical data model** — `crates/mce-state/src/`:
+**The canonical data model** — `crates/amc-state/src/`:
 - `model.rs`: `CanonicalState { schema_version, name, namespace, concepts: BTreeMap, recipes: BTreeMap }`
   (`:105-119`), `Concept` (`:36-55`), `Recipe` (`:70-94`), `ConceptType`/`RecipeType`/`Status` enums.
   `state_hash()` gives the determinism hash (`:143-189`).
@@ -93,9 +93,9 @@ lives in `crates/mce-schema/src/lib.rs`: schemas are `include_str!`-embedded at 
 | `manager.rs:178` `commit` | candidate → canonical (only if verified) |
 | `manager.rs:418-441` `apply_operation` | reads `op["operation"]`/`["payload"]` |
 | `model.rs:143-189` `state_hash` | serialize concepts/recipes for the determinism hash |
-| `mce-cli/src/project.rs:112-132` `save` / `:86-109` `load` | persist/restore `.mce/state.json` (atomic) |
-| `mce-cli/src/main.rs:450,467,527` | request flow: validate → open_candidate → commit |
-| `apps/desktop/src-tauri/src/main.rs:410,464` | **desktop shells out to the `mce` CLI `--json`** — it does *not* link the crates |
+| `amc-cli/src/project.rs:112-132` `save` / `:86-109` `load` | persist/restore `.amc/state.json` (atomic) |
+| `amc-cli/src/main.rs:450,467,527` | request flow: validate → open_candidate → commit |
+| `apps/desktop/src-tauri/src/main.rs:410,464` | **desktop shells out to the `amc` CLI `--json`** — it does *not* link the crates |
 
 The desktop app talking to the engine only through the CLI `--json` contract is a load-bearing fact for
 the LSP question (see §9, §10): there is already a stable machine-readable seam.
@@ -106,17 +106,17 @@ Errors are detected at **four** distinct times:
 
 | When | Where | Error shape |
 |---|---|---|
-| **Intent / parse time** | `crates/mce-intent/src/http.rs` | **free-text strings** in `MceError::validation(Component::IntentAdapter, …)` (e.g. "model output had no valid operations array", `http.rs:195-200`) |
-| **Validation time** (Stages 1–8) | `crates/mce-validator` (Stages 1–6) + `crates/mce-state` (Stages 7–8) | **structured** `ValidationError` / `Clarification` / `Unsupported` |
-| **Compile time** | `crates/mce-build` — Gradle build | `BuildOutcome` classified by **substring match** on the log; `CompileError → owner "GENERATOR"` (`lib.rs:39-48,145-176`) |
-| **Game runtime** | `crates/mce-verify` — `runGameTestServer` | pass/fail parsed from GameTest summary lines (`gametest.rs:24-42`); registry + behavior asserted, **recipes not asserted** |
+| **Intent / parse time** | `crates/amc-intent/src/http.rs` | **free-text strings** in `AmcError::validation(Component::IntentAdapter, …)` (e.g. "model output had no valid operations array", `http.rs:195-200`) |
+| **Validation time** (Stages 1–8) | `crates/amc-validator` (Stages 1–6) + `crates/amc-state` (Stages 7–8) | **structured** `ValidationError` / `Clarification` / `Unsupported` |
+| **Compile time** | `crates/amc-build` — Gradle build | `BuildOutcome` classified by **substring match** on the log; `CompileError → owner "GENERATOR"` (`lib.rs:39-48,145-176`) |
+| **Game runtime** | `crates/amc-verify` — `runGameTestServer` | pass/fail parsed from GameTest summary lines (`gametest.rs:24-42`); registry + behavior asserted, **recipes not asserted** |
 
-The validator's declared **stages** (`SPEC-003 §7`, inline comments in `mce-validator/src/lib.rs`) are
+The validator's declared **stages** (`SPEC-003 §7`, inline comments in `amc-validator/src/lib.rs`) are
 JSON syntax → Schema → References → Properties → Semantics → Capability (Stages 1–6), then
-candidate-state schema + referential integrity (Stages 7–8, enforced in `mce-state`). **[INFERENCE]** these
+candidate-state schema + referential integrity (Stages 7–8, enforced in `amc-state`). **[INFERENCE]** these
 are conceptual comment markers, not a reified pipeline object an LSP could iterate as data.
 
-**Complete list of semantic validation rules** (from `crates/mce-validator/src/lib.rs`; each carries a
+**Complete list of semantic validation rules** (from `crates/amc-validator/src/lib.rs`; each carries a
 `code`, an `operation_index`, and a hand-authored dotted `path` — but **no line/column**):
 
 | # | Check | Function:line | code | path |
@@ -152,8 +152,8 @@ Numeric constraint table (`check_properties:554-577`) covers weapon/tool/item/fo
 
 ## 3. The AI loop — and the fact that there is no repair loop
 
-- **Input:** the system prompt is the **CONTRACT**, `include_str!`'d from `crates/mce-intent/contract/contract.txt`
-  (`mce-intent/src/lib.rs:31`) and **SHA-256-pinned by a test** to prevent train/serve skew. The user
+- **Input:** the system prompt is the **CONTRACT**, `include_str!`'d from `crates/amc-intent/contract/contract.txt`
+  (`amc-intent/src/lib.rs:31`) and **SHA-256-pinned by a test** to prevent train/serve skew. The user
   message mirrors training exactly. The call is a single OpenAI-compatible `/v1/chat/completions` request,
   temperature 0, greedy (`http.rs:67-78,172-190`).
 - **Output:** parsed by `extract_ops` (scan balanced `[...]`, take the last valid ops array), then
@@ -166,7 +166,7 @@ Numeric constraint table (`check_properties:554-577`) covers weapon/tool/item/fo
 **There is NO loop that feeds a validation/build/verify error back to the LLM for a repair attempt.**
 Confirmed by grep across `crates/` + `apps/`: the only "retry" is an *infrastructure-flake* GameTest re-run
 of a byte-identical build (`runner.rs:32-46`), not a model re-prompt. A `repairable: bool` field exists on
-`ValidationError` (`mce-validator/src/lib.rs:34`) but is **written and never read** — the original design
+`ValidationError` (`amc-validator/src/lib.rs:34`) but is **written and never read** — the original design
 anticipated automated repair that was never built. Every downstream error terminates by being surfaced to
 the user as a `--json` payload + non-zero exit code (`main.rs` `fail`/`finish`, `:242-251` / `:845-871`).
 
@@ -183,7 +183,7 @@ fresh one-shot, not a feedback loop.
 
 ## 4. Cross-file / referential integrity — strong within a concept, gaps at the reference boundary
 
-The generator (`crates/mce-generator/src/lib.rs`) is a **full re-materialization** from one `CanonicalState`:
+The generator (`crates/amc-generator/src/lib.rs`) is a **full re-materialization** from one `CanonicalState`:
 `build_files` emits every artifact, then `prune_stale` deletes any file under `src/main/java` /
 `src/main/resources` not in the fresh set (`:98,116`). Every emitter iterates the *same*
 `sorted_concepts(state)` and derives names from the *same* `path_of(namespace_id)`.
@@ -198,9 +198,9 @@ survives a rename/delete. A lang file (`assets/{modid}/lang/en_us.json`) and cre
 
 | # | Gap | Where | Consequence |
 |---|---|---|---|
-| GAP 1 | **Vanilla-id existence is never checked.** `resolve` returns `Vanilla` for *any* `minecraft:*` string | `mce-state/src/reference.rs:67` | `minecraft:doesnotexist` passes validation → invalid recipe/loot ref; only a runtime datapack load would notice, and generated GameTests don't test recipes |
-| GAP 2 | **Deleting a concept used by a recipe is not blocked or cascaded.** The delete guard scans *concepts only* | `mce-state/src/manager.rs:562-572` | Stale recipe survives; generator emits a recipe JSON with a bogus `concept_…` id. Runtime-only failure |
-| GAP 3 | **Two recipes with the same result silently overwrite.** Recipe file is named after the result path | `mce-generator/src/lib.rs:273-277` | A shaped + a smelting recipe for the same item → second overwrites first, no warning |
+| GAP 1 | **Vanilla-id existence is never checked.** `resolve` returns `Vanilla` for *any* `minecraft:*` string | `amc-state/src/reference.rs:67` | `minecraft:doesnotexist` passes validation → invalid recipe/loot ref; only a runtime datapack load would notice, and generated GameTests don't test recipes |
+| GAP 2 | **Deleting a concept used by a recipe is not blocked or cascaded.** The delete guard scans *concepts only* | `amc-state/src/manager.rs:562-572` | Stale recipe survives; generator emits a recipe JSON with a bogus `concept_…` id. Runtime-only failure |
+| GAP 3 | **Two recipes with the same result silently overwrite.** Recipe file is named after the result path | `amc-generator/src/lib.rs:273-277` | A shaped + a smelting recipe for the same item → second overwrites first, no warning |
 | GAP 4 | **Slug → Java identifier legality is unchecked.** Uppercased slug, no identifier validation | `lib.rs:582`, `namespace.rs:11` | e.g. a leading-digit name → uncompilable Java; caught only at Gradle build (classified `GENERATOR`) |
 | — | **Generated asset JSON is never schema-validated.** Recipe/model/lang/loot JSON are hand-built strings, emitted unchecked | `recipe_json:323`, `item_model_json:813`, `lang_json:854` | Malformed generated JSON reaches the build/runtime unvalidated |
 
@@ -235,7 +235,7 @@ become the structured error channel for the LLM repair loop.*
 *Restructure so the language server is the source of truth for validation; codegen and AI call into it.*
 
 - **This inverts a clean, working architecture.** The canonical validator already exists, is in-process, is
-  deterministic, and is called by the CLI and state manager (`SPEC-003 §7`; `mce-validator`). It is
+  deterministic, and is called by the CLI and state manager (`SPEC-003 §7`; `amc-validator`). It is
   unit-tested at "Layer 1" of the test pyramid (`SPEC-003 §14`). Making an LSP server the source of truth
   would push a **text-document + async-doc-sync + position** machinery underneath a system whose source of
   truth is a **typed Rust state model**, add latency and a long-running server process to a CLI that is
@@ -290,9 +290,9 @@ become the structured error channel for the LLM repair loop.*
   `Unsupported`=Warning). Good news.
 - **Positions: none exist. Every validator lacks line/column/byte-offset.** The richest location any finding
   carries is `operation_index: usize` + a hand-authored dotted `path: String`
-  (`mce-validator/src/lib.rs:27-35`). `Clarification`/`Unsupported` carry only `operation_index`. The
+  (`amc-validator/src/lib.rs:27-35`). `Clarification`/`Unsupported` carry only `operation_index`. The
   jsonschema `instance_path` (a real JSON pointer) exists transiently but is `format!`'d into a string and
-  **discarded** (`mce-schema/src/lib.rs:98-101`). **This is the entire retrofit cost.**
+  **discarded** (`amc-schema/src/lib.rs:98-101`). **This is the entire retrofit cost.**
 - **The bridge:** because `path` strings already resemble JSON pointers (`payload.recipe.key.R`,
   `properties.durability`), the lowest-cost retrofit is: re-parse the operations array (or `state.json`)
   with a **span-preserving** JSON parser, then map `(operation_index, path)` → a source `range`. Caveats
@@ -310,7 +310,7 @@ become the structured error channel for the LLM repair loop.*
 The place these pay off is **the generated artifacts**, not the MCL input.
 
 - **JSON Schema for asset files [EXTERNAL/low-cost]:** the generated recipe/model/lang/loot JSON are
-  emitted **unvalidated** (§4). The `jsonschema` Rust crate is **already a dependency** (`mce-schema`).
+  emitted **unvalidated** (§4). The `jsonschema` Rust crate is **already a dependency** (`amc-schema`).
   Bundling Minecraft data-format schemas and validating generated JSON *before* the Gradle build is a cheap,
   high-value static gate — and needs **no LSP and no new runtime**. **This is the single best "borrow,
   don't build" win.**
@@ -320,13 +320,13 @@ The place these pay off is **the generated artifacts**, not the MCL input.
   and directly close **GAP 1** (vanilla-id existence). Caveat: it is **Node/TypeScript**, so integrating it
   means bundling a **Node runtime** and spawning it as an LSP client from Rust — which **conflicts with the
   product's "self-contained, no-Python, no-extra-runtime" ethos** (see the desktop bundle, which ships only
-  a static `llama-server` + `mce`). **[INFERENCE]** for the *few* checks you actually need, extracting the
+  a static `llama-server` + `amc`). **[INFERENCE]** for the *few* checks you actually need, extracting the
   relevant vanilla-id list into a bundled data file and checking it in Rust is lighter than adopting Node.
 - **Eclipse JDT.LS for generated Java [EXTERNAL]:** JDT.LS gives Java compile diagnostics with positions
   *without* a full Gradle build — but it needs the project's classpath (NeoForge deps) resolved, which is
   ~as heavy as the Gradle build the pipeline already runs, plus a JVM language-server process. Marginal
   value on the creator path (the user never reads Java); potentially useful on a **developer/debug surface**.
-- **What a thin orchestrator would look like here:** a new `crates/mce-diagnostics` (or a subcommand) that,
+- **What a thin orchestrator would look like here:** a new `crates/amc-diagnostics` (or a subcommand) that,
   post-generation, (1) validates generated asset JSON against bundled Minecraft schemas in-process, and
   (2) optionally shells out to Spyglass/JDT.LS *only in a developer mode*, then **normalizes all results
   into the one `Diagnostic` shape** and emits them on the existing `--json` seam. The orchestrator is the
@@ -341,7 +341,7 @@ The place these pay off is **the generated artifacts**, not the MCL input.
   meant to be consumed.
 - **MCP wrapper vs. direct LSP client:** since the agent loop is **in-process Rust** and the desktop already
   speaks to the engine via the **CLI `--json`** contract, the lighter integration is an **MCP tool** (e.g.
-  `mce_diagnose(ops|state) → [Diagnostic]`) or a direct in-process call — **not** a full LSP client. A real
+  `amc_diagnose(ops|state) → [Diagnostic]`) or a direct in-process call — **not** a full LSP client. A real
   LSP client in the agent loop only earns its keep if you're *also* driving JDT.LS/Spyglass for the
   generated artifacts.
 - **Expected win, sized honestly:** structured diagnostics (code + normalized path + message + severity)
@@ -388,30 +388,30 @@ A diagnostics-only capability that unifies error output and adds the five highes
    emit `Vec<Diagnostic>`.
 3. **The five highest-value cross-file checks:**
    - **C1 — Vanilla-id existence** (closes GAP 1): a `minecraft:*` reference must be in a bundled vanilla
-     registry-id set. *Touches:* `mce-state/src/reference.rs` (`resolve`), a new bundled data file of
-     vanilla ids, `mce-validator`.
+     registry-id set. *Touches:* `amc-state/src/reference.rs` (`resolve`), a new bundled data file of
+     vanilla ids, `amc-validator`.
    - **C2 — Recipe survives concept deletion** (closes GAP 2): extend the delete guard to scan **recipes**,
      and either block the delete or cascade-delete dependent recipes. *Touches:*
-     `mce-state/src/manager.rs` (`find_referrer` / delete path).
+     `amc-state/src/manager.rs` (`find_referrer` / delete path).
    - **C3 — Duplicate recipe result** (closes GAP 3): reject/warn when two active recipes resolve to the
-     same result path before generation. *Touches:* `mce-validator` or
-     `mce-generator/src/lib.rs:273-277`.
+     same result path before generation. *Touches:* `amc-validator` or
+     `amc-generator/src/lib.rs:273-277`.
    - **C4 — Java-identifier legality** (closes GAP 4): validate that a concept's slug yields a legal Java
-     identifier (no leading digit, no collision) at create time. *Touches:* `mce-state/src/namespace.rs`,
-     `mce-validator`.
+     identifier (no leading digit, no collision) at create time. *Touches:* `amc-state/src/namespace.rs`,
+     `amc-validator`.
    - **C5 — Generated asset-JSON validity**: validate generated recipe/model/lang/loot JSON against bundled
      Minecraft schemas *before* the Gradle build, using the already-present `jsonschema` crate. *Touches:* a
-     new `crates/mce-diagnostics` (or a generator post-pass), bundled schemas.
-4. Surface all of the above on the existing CLI `--json` contract (`mce-cli/src/main.rs` `finish`), and add
-   an **MCP tool `mce_diagnose`** so agents consume the same structured stream.
+     new `crates/amc-diagnostics` (or a generator post-pass), bundled schemas.
+4. Surface all of the above on the existing CLI `--json` contract (`amc-cli/src/main.rs` `finish`), and add
+   an **MCP tool `amc_diagnose`** so agents consume the same structured stream.
 
 **Explicitly out of scope for v0** (revisit only if a text-editing surface emerges): a `tower-lsp` server,
 tree-sitter grammar, JDT.LS/Spyglass integration, source-range positions, and any model-repair loop (build
 the structured channel first; wire the loop second, once C1–C5 prove the diagnostic contract).
 
-**Files the milestone touches:** `crates/mce-validator/src/lib.rs`, `crates/mce-state/src/{manager,reference,namespace}.rs`,
-`crates/mce-generator/src/lib.rs`, `crates/mce-core/src/error.rs` (or a new `crates/mce-diagnostics`),
-`crates/mce-cli/src/main.rs`, plus new bundled data (vanilla-id set, Minecraft asset schemas).
+**Files the milestone touches:** `crates/amc-validator/src/lib.rs`, `crates/amc-state/src/{manager,reference,namespace}.rs`,
+`crates/amc-generator/src/lib.rs`, `crates/amc-core/src/error.rs` (or a new `crates/amc-diagnostics`),
+`crates/amc-cli/src/main.rs`, plus new bundled data (vanilla-id set, Minecraft asset schemas).
 
 ---
 
@@ -447,7 +447,7 @@ project's existing *tiered* instinct (ADR-0007 tiers the model by difficulty); h
 The single biggest asset for this bridge is already true in the code: **the generated project at
 `<project>/mod/` is a complete, standalone NeoForge Gradle project** (it emits `gradlew`, `build.gradle`,
 `settings.gradle`, `src/main/java/**`, and a datapack under `src/main/resources/data/**` — `build_files`,
-`mce-generator/src/lib.rs:162-281`). So "graduating" a user is *structurally* almost free: hand them
+`amc-generator/src/lib.rs:162-281`). So "graduating" a user is *structurally* almost free: hand them
 `<project>/mod/` and it opens, builds, and runs like any mod project.
 
 That means the T2/T3 editing surface is **standard Minecraft-modding tooling**, which already has mature,
@@ -474,7 +474,7 @@ This is the crux, and it is a **source-of-truth** problem the current design is 
 - **Generation is a full re-materialization from canonical state, and it prunes.** `generate()` writes the
   entire file set from `CanonicalState`, then `prune_stale()` **deletes any file under `src/main/java` or
   `src/main/resources` that isn't in the freshly generated set** (`MANAGED_ROOTS`,
-  `mce-generator/src/lib.rs:111`; `prune_stale`, `:116`). This is *exactly* the behavior that makes the
+  `amc-generator/src/lib.rs:111`; `prune_stale`, `:116`). This is *exactly* the behavior that makes the
   no-code loop correct (a removed recipe truly disappears) — and it is *exactly* what will **silently
   destroy a graduating user's hand-edits** the next time they run one more no-code request.
 - So the moment a user crosses into T2 and edits generated code, the two sources of truth (canonical
@@ -559,21 +559,21 @@ What does **not** change: no bespoke MCL LSP; MCL/state remains source of truth 
 
 Sequenced after "Structured Diagnostics v0" (§10):
 
-- **Milestone B1 — "Graduate / Eject" (model A).** A `mce graduate <project>` (or GUI button) that marks a
+- **Milestone B1 — "Graduate / Eject" (model A).** A `amc graduate <project>` (or GUI button) that marks a
   project hand-owned: stop regenerating/pruning it, print/emit VS Code + JDT.LS + Spyglass setup, and record
-  the eject in state. *Touches:* `crates/mce-cli/src/main.rs` (new subcommand), `crates/mce-cli/src/project.rs`
-  (a "graduated" flag in `.mce/state.json`), the generator's entry (`generate()` becomes a no-op / refuses
-  to prune a graduated project — `mce-generator/src/lib.rs:75-105`). **Low effort, high unlock; no LSP code
+  the eject in state. *Touches:* `crates/amc-cli/src/main.rs` (new subcommand), `crates/amc-cli/src/project.rs`
+  (a "graduated" flag in `.amc/state.json`), the generator's entry (`generate()` becomes a no-op / refuses
+  to prune a graduated project — `amc-generator/src/lib.rs:75-105`). **Low effort, high unlock; no LSP code
   of our own — we hand off to stock servers.**
 - **Milestone B2 — Ownership boundary + drift detection (prerequisite for model B).** Carve a never-pruned
   user zone and/or protected regions; exploit `GenerationManifest` hashes to detect user-touched generated
   files and refuse to clobber them (warn/merge instead). *Touches:* `MANAGED_ROOTS` / `prune_stale`
-  (`mce-generator/src/lib.rs:111,116`), `manifest.rs`, generator emitters (protected-region markers). **This
+  (`amc-generator/src/lib.rs:111,116`), `manifest.rs`, generator emitters (protected-region markers). **This
   is the real bespoke work — do it before inviting two-way editing.**
 - **Milestone B3 — Diagnostic orchestrator over generated artifacts.** A thin layer that runs JDT.LS
   (Java) + Spyglass or `jsonschema` (datapack/assets), normalizes results into the `Diagnostic` shape, adds
   MCL provenance, and exposes them on the `--json`/MCP seam for both the graduating human and the AI agent.
-  *Touches:* a new `crates/mce-diagnostics` orchestrator; optional bundled Node for Spyglass (weigh against
+  *Touches:* a new `crates/amc-diagnostics` orchestrator; optional bundled Node for Spyglass (weigh against
   the no-extra-runtime ethos — JSON-schema-in-Rust may suffice for v1).
 
 ## 18. Bridge-specific risks
@@ -600,6 +600,6 @@ Sequenced after "Structured Diagnostics v0" (§10):
 Investigation used three parallel read-only code passes (DSL/MCL + validator; AI/error loop; generator +
 verification + integrity) plus a direct read of `SPEC-003` (System Architecture), `SPEC-004` (MCL
 Specification), and ADR-0002/0007/0008. Phase 4 (2026-07-21 addendum) reasons from the same code findings —
-notably `prune_stale`/`MANAGED_ROOTS` (`mce-generator/src/lib.rs:111,116`), the standalone generated Gradle
+notably `prune_stale`/`MANAGED_ROOTS` (`amc-generator/src/lib.rs:111,116`), the standalone generated Gradle
 project (`build_files`), and `GenerationManifest` hashes (`manifest.rs`) — applied to the no-code→code
 bridge scenario. Inference vs. read is tagged inline. No files were modified during this assessment.

@@ -42,4 +42,4 @@ template, palette, style tags, asset_seed).
 
 - Product requirement(s): `FR-004`.
 - MCL element(s): appearance `SPEC-004 §17`.
-- Component(s): `mce-generator` (`texture`/appearance).
+- Component(s): `amc-generator` (`texture`/appearance).

@@ -32,7 +32,7 @@ preservation: `SPEC-001 NFR-003`.
   transaction is marked `verification_failed`/`build_failed` and canonical state is untouched.
 - Update is merge-based (`SPEC-004 §21`); delete defaults to `reject_if_referenced`
   (`SPEC-004 §23`).
-- Hashes exclude timestamps (`mce-core::canonical_hash`); same parent + same normalized ops →
+- Hashes exclude timestamps (`amc-core::canonical_hash`); same parent + same normalized ops →
   same `candidate_state_hash` (`SPEC-005 §22`).
 
 ## Acceptance Tests
@@ -52,4 +52,4 @@ preservation: `SPEC-001 NFR-003`.
 
 - Product requirement(s): `FR-002`, `FR-006` (rollback), `FR-007` (repeatability), `NFR-003`.
 - MCL element(s): transaction (`SPEC-004 §31`), operations.
-- Component(s): `mce-state`.
+- Component(s): `amc-state`.

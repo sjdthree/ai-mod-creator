@@ -41,4 +41,4 @@ bytes).
 
 - Product requirement(s): `FR-004`, `FR-007`.
 - MCL element(s): appearance (`SPEC-004 §17`).
-- Component(s): `mce-generator`.
+- Component(s): `amc-generator`.

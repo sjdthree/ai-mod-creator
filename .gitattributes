@@ -1,25 +1,25 @@
 # Line-ending policy. Without this, a Windows checkout with core.autocrlf=true rewrites text
 # files to CRLF — which silently corrupts bytes that must be exact:
-#   * crates/mce-intent/contract/* are embedded (include_str!) and hashed
+#   * crates/amc-intent/contract/* are embedded (include_str!) and hashed
 #     as the model's trained prompt/grammar;
 #     CRLF changes the bytes the model sees at inference vs. training.
-#   * crates/mce-generator/assets/gradlew is a POSIX shell script embedded (include_bytes!) into
+#   * crates/amc-generator/assets/gradlew is a POSIX shell script embedded (include_bytes!) into
 #     every generated mod; a CRLF shebang makes it fail with "bad interpreter" on macOS/Linux.
 # Byte-sensitive assets and shell scripts are pinned to LF on ALL platforms; Windows batch stays
 # CRLF; known binaries are marked so they are never touched. Scoped deliberately to the files that
 # actually break — NOT a repo-wide `* text=auto` — to avoid churning everyone's working copies.
 
 # Embedded, byte-exact assets — MUST be LF.
-crates/mce-intent/contract/*  text eol=lf
+crates/amc-intent/contract/*  text eol=lf
 schemas/**/*.json         text eol=lf
 
 # Shell scripts (incl. the extensionless generated Gradle wrapper) — MUST be LF to run on Unix.
 *.sh                                      text eol=lf
-crates/mce-generator/assets/gradlew       text eol=lf
+crates/amc-generator/assets/gradlew       text eol=lf
 
 # Windows batch — keep CRLF.
 *.bat                                       text eol=crlf
-crates/mce-generator/assets/gradlew.bat     text eol=crlf
+crates/amc-generator/assets/gradlew.bat     text eol=crlf
 
 # Binaries — never apply EOL/textual conversion.
 *.jar   binary
