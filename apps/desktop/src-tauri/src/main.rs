@@ -6,7 +6,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Child, Command};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -365,6 +366,22 @@ fn llama_server_bin() -> Option<String> {
     None
 }
 
+/// The model server this app started, if any — stopped on exit so closing the app doesn't leave
+/// `llama-server` running and holding the port (where the next launch, possibly an upgraded app with a
+/// different model, would mistake it for its own). A server we found already running isn't ours to stop.
+static MODEL_SERVER: Mutex<Option<Child>> = Mutex::new(None);
+
+fn stop_model() {
+    if let Some(mut child) = MODEL_SERVER
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .take()
+    {
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+}
+
 /// Start our intent model server if it isn't already up. Idempotent: a reachable server short-circuits.
 /// Prefers the **no-Python** path — native `llama-server` on the quantized GGUF — and falls back to the
 /// Python MLX runtime (base + adapter) only when the GGUF or llama-server isn't available. Returns a
@@ -437,7 +454,8 @@ fn ensure_model() -> Value {
         cmd.stdout(o).stderr(e);
     }
     match cmd.spawn() {
-        Ok(_) => {
+        Ok(child) => {
+            *MODEL_SERVER.lock().unwrap_or_else(|p| p.into_inner()) = Some(child);
             json!({ "state": "starting", "backend": backend, "log": log.display().to_string() })
         }
         Err(e) => json!({ "state": "unavailable",
@@ -730,6 +748,7 @@ fn private_download_dir() -> Result<PathBuf, String> {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
     let dir = std::env::temp_dir().join(format!("amc-dl-{}-{nanos}", std::process::id()));
+    #[cfg_attr(not(unix), allow(unused_mut))]
     let mut builder = std::fs::DirBuilder::new();
     #[cfg(unix)]
     {
@@ -998,6 +1017,12 @@ async fn play(project: String) -> Result<Value, String> {
         .map_err(|e| e.to_string())?
 }
 
+/// Is this a Windows Remote Desktop session? (`SESSIONNAME` is `RDP-Tcp#N` there, `Console` locally.)
+fn remote_desktop_session() -> bool {
+    cfg!(windows)
+        && std::env::var("SESSIONNAME").is_ok_and(|s| s.to_ascii_uppercase().starts_with("RDP-"))
+}
+
 fn play_watch(
     bin: String,
     proj: String,
@@ -1028,14 +1053,16 @@ fn play_watch(
         .spawn()
         .map_err(|e| format!("could not start the sandbox: {e}"))?;
 
-    // Ready markers = the client actually came up; failure = an early non-zero exit.
-    const READY: &[&str] = &[
-        "Sound engine started",
-        "Setting user:",
-        "joined the game",
-        "LWJGL",
-    ];
-    let deadline = Instant::now() + Duration::from_secs(180);
+    // Ready markers = the client actually came up; failure = an early non-zero exit. Only lines Minecraft
+    // logs AFTER its OpenGL window exists count: `Setting user:` and the `LWJGL` backend line print
+    // before window creation, so a client that dies on a graphics-driver error (e.g. "LoadLibrary failed
+    // with error 126" over Remote Desktop) used to be reported as open.
+    const READY: &[&str] = &["Sound engine started", "textures/atlas/", "joined the game"];
+    // The client logs this right before creating its window; if nothing follows, the window never came up.
+    const PRE_WINDOW: &str = "Backend library: LWJGL";
+    let started = Instant::now();
+    let deadline = started + Duration::from_secs(300);
+    let mut pre_window_at: Option<Instant> = None;
     loop {
         if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
             if status.success() {
@@ -1051,11 +1078,25 @@ fn play_watch(
             if READY.iter().any(|m| text.contains(m)) {
                 return Ok(json!({ "status": "launched" })); // up and running — leave it for the session
             }
+            if pre_window_at.is_none() && text.contains(PRE_WINDOW) {
+                pre_window_at = Some(Instant::now());
+            }
+        }
+        // Over Remote Desktop there's no OpenGL driver, so the window never appears (Windows shows a
+        // driver error dialog instead). Say so plainly rather than waiting out the full deadline.
+        if remote_desktop_session()
+            && pre_window_at.is_some_and(|t| t.elapsed() > Duration::from_secs(25))
+        {
+            return Err(format!(
+                "Minecraft couldn't open its game window. This PC is being used over Remote Desktop, \
+                 which can't run OpenGL games — run the Quick Test at the computer itself.\n\n(Full log: {})",
+                log.display()
+            ));
         }
         if Instant::now() > deadline {
-            return Ok(
-                json!({ "status": "launched", "detail": "still starting — this can take a bit" }),
-            );
+            return Ok(json!({ "status": "starting",
+                "detail": format!("Minecraft still hasn't opened its window after {} minutes. If no game \
+                    window appears, check the log: {}", started.elapsed().as_secs() / 60, log.display()) }));
         }
         std::thread::sleep(Duration::from_millis(800));
     }
@@ -1135,8 +1176,13 @@ fn main() {
             launch_minecraft,
             pick_mods_folder
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running AI-mod creator");
+        .build(tauri::generate_context!())
+        .expect("error while running AI-mod creator")
+        .run(|_app, event| {
+            if let tauri::RunEvent::Exit = event {
+                stop_model();
+            }
+        });
 }
 
 #[cfg(test)]

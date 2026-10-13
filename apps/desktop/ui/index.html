@@ -82,6 +82,7 @@
     font: 17px/1.5 var(--sans); min-height: 58px;
   }
   .composer .row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .refbar[hidden] { display: none; }
   .refbar { display: flex; align-items: center; gap: 9px; padding: 7px 9px 10px; margin: -3px -3px 8px; border-bottom: 1px solid var(--edge); }
   .refbar .reftag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); padding: 3px 7px; border-radius: 6px; }
   .refbar .refic { width: 20px; height: 20px; image-rendering: pixelated; border-radius: 4px; }
@@ -175,7 +176,7 @@
   <aside class="side">
     <div class="brand">
       <canvas class="glyph" width="16" height="16" data-icon="sword"></canvas>
-      <h1>MOD<b>·</b>CREATION</h1>
+      <h1>AI<b>·</b>MOD CREATOR</h1>
       <span class="ver">v1</span>
     </div>
     <div class="proj">
@@ -781,10 +782,16 @@ async function doPlay(){
     $("#enginestat").textContent = `${baseMsg}… (${fmt(Math.round((Date.now()-t0)/1000))} elapsed — still working)`;
   }, 1000);
   try {
-    await engine.play(current.project);
+    const res = await engine.play(current.project);
     localStorage.setItem(FIRST_QT_KEY, "1");   // subsequent launches use the faster wording
-    $("#enginestat").textContent = "sandbox open — find your items in the Combat/Tools tabs";
-    toast("Sandbox is open. Find your items in the Combat / Tools / Building-Blocks tab (or search).", null, 8000);
+    if (res && res.status === "starting"){
+      // The backend never saw the game window come up — don't claim it's open.
+      $("#enginestat").textContent = "sandbox still starting";
+      toast(res.detail || "Minecraft is still starting.", "warn", 12000);
+    } else {
+      $("#enginestat").textContent = "sandbox open — find your items in the Combat/Tools tabs";
+      toast("Sandbox is open. Find your items in the Combat / Tools / Building-Blocks tab (or search).", null, 8000);
+    }
   } catch(e){
     // The backend surfaces real build/launch failures instead of pretending it launched.
     $("#enginestat").textContent = "sandbox didn't open";
