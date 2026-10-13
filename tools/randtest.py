@@ -13,7 +13,7 @@ version of these same invariants (intent layer only, no Gradle) lives as a Rust 
 crates/amc-intent/src/randomized_tests.rs and runs under `cargo test`.
 
     Usage:  python tools/randtest.py [N]        # N random items, default 3
-    Env:    JAVA_HOME                            # defaults to the Android Studio JBR on Windows
+    Env:    JAVA_HOME                            # should point at a JDK 21 install
             AMC_BIN                              # override the amc binary path
 """
 import subprocess, json, random, string, os, sys, tempfile, shutil
@@ -35,8 +35,6 @@ def amc_bin():
 
 AMC = amc_bin()
 ENV = dict(os.environ)
-if not ENV.get("JAVA_HOME") and os.name == "nt":
-    ENV["JAVA_HOME"] = r"C:\Program Files\Android\Android Studio\jbr"
 
 WEAPONS = ["sword", "dagger", "mace", "blade", "cutlass", "rapier", "katana", "spear"]
 TOOLS = ["pickaxe", "axe", "shovel", "hoe", "drill", "hatchet"]

@@ -11,45 +11,24 @@ how to run it, and the loader(s) it applies to.
 
 ## 0. Prerequisites — the stuff we need
 
-### Toolchain inventory (probed 2026-07-22 on this Mac)
+### Toolchain
 
-| Tool | Status | Notes |
+| Tool | Needed for | Notes |
 |---|---|---|
-| **JDK 21** | ✅ present | Temurin `21.0.2` at `/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home`. **Not** the shell default. |
-| Default `java` (PATH) | ⚠️ JDK 17 | Homebrew `openjdk@17`. Fine to *launch* Gradle; compile toolchain is pinned to 21. |
-| `JAVA_HOME` (shell) | ⚠️ JDK 8 | Points at `adoptopenjdk-8`. **Must override for direct CLI tests** (see gotcha below). |
-| System `gradle` | ➖ absent | Not needed — the generator embeds the Gradle **wrapper**. |
-| Node / npm / pnpm | ✅ | Node 22.22, npm 10.9, pnpm — for the Tauri GUI. |
-| Rust / cargo-tauri | ✅ | rustc 1.97, `cargo-tauri` installed. |
-| `gh` | ✅ authed | account `sjdthree`. |
-| `xvfb-run` | ➖ absent | Expected on macOS (real display); only the Linux headless smoke needs it. |
-
-**Verdict on "do we have JDK 21?": yes.** No install needed. The one hazard was environment wiring,
-which is now **fixed** (see below).
-
-### JDK 21 machine setup — RESOLVED (2026-07-22)
-
-The shell config was cleaned up so JDK 21 is the default for **every** shell type. Root cause: three
-dotfiles disagreed and none set 21 — `~/.zshenv` forced JDK 8 onto all non-interactive shells (what
-`amc`/Gradle inherit), `~/.zshrc` set JDK 17 for interactive terminals, nothing set 21.
-
-Fix (single source of truth): a new `~/.java-env` sets `JAVA_HOME` to Temurin 21 (idempotent, no PATH
-bloat) and defines a `use-java <version>` switcher; it's sourced from `~/.zshenv` (all zsh) and
-`~/.bashrc` + `~/.bash_profile` (bash). The stale JDK 8 (`~/.zshenv`) and JDK 17 (`~/.zshrc`) lines
-were removed. All originals backed up as `*.bak-jdk21-cleanup`. Verified: non-interactive zsh,
-interactive login zsh, and login bash all report `JAVA_HOME=…/temurin-21…` and `java 21.0.2`;
-`use-java 17`/`use-java 21` switch cleanly; nested shells show no PATH duplication.
-
-**Consequence for testing:** the T-1 workaround (manually exporting `JAVA_HOME` before builds) is no
-longer needed on this machine — a fresh shell already has 21. GitHub Actions still pins its own JDK
-via `setup-java`.
+| **JDK 21** | building and verifying mods | Gradle's compile toolchain is pinned to 21. Any vendor works (Temurin recommended). |
+| `JAVA_HOME` | CLI tests | Must point at JDK 21 when running `amc` directly — see the gotcha below. |
+| Rust (stable) | everything | Version pinned by `rust-toolchain.toml`. |
+| `cargo-tauri` | the desktop app | `cargo install tauri-cli --version "^2.0" --locked`. |
+| Node / npm | the desktop GUI | Only for the Tauri front end. |
+| System `gradle` | — | Not needed: the generator embeds the Gradle **wrapper**. |
+| `xvfb-run` | Linux headless client smoke | Not needed on macOS/Windows (real display). |
 
 ### The `JAVA_HOME` gotcha (critical for CLI testing)
 
 The **desktop app** already does the right thing: `java_home()` runs `/usr/libexec/java_home -v 21`
 and injects `JAVA_HOME` into every `amc` invocation (`apps/desktop/src-tauri/src/main.rs`). But when
-we run the **CLI directly** in a shell, `amc` inherits the shell's `JAVA_HOME` — which is **JDK 8**
-here. Gradle 8.10 can *run* on 8 but it's deprecated and its toolchain must still locate JDK 21 to
+we run the **CLI directly** in a shell, `amc` inherits the shell's `JAVA_HOME` — which may not be
+JDK 21. Gradle 8.10 can *run* on 8 but it's deprecated and its toolchain must still locate JDK 21 to
 compile. To make CLI tests deterministic and match production, **export JDK 21 before any build/verify
 test**:
 
