@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.3.0-alpha.3] — 2026-10-13
+
+- **Renamed throughout to AI-mod creator / AMC.** The CLI is now `amc`, environment variables are
+  `AMC_*` (were `MCE_*`), and new projects get `amc_` mod ids. Existing projects keep their mod ids,
+  and their `.mce/` folder is moved to `.amc/` the first time they're opened.
+- **Desktop:** the model server now stops when the app quits, and Quick Test only reports the game
+  as open once its window is up.
+- **Windows:** the build scripts are plain ASCII, so Windows PowerShell 5.1 can run them.
+- **Security:** `rustls` 0.23.45 ([GHSA-2mjx-qc3c-rqvc](https://github.com/advisories/GHSA-2mjx-qc3c-rqvc)).
+
 ## [0.3.0] — 2026-10-12 — first public alpha
 
 The first public release. Earlier development happened in a private repository.
