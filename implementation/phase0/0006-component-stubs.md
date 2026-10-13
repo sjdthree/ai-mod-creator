@@ -23,10 +23,10 @@ owner (`SPEC-003 §20`, `SPEC-005 §17`).
 
 ## Implementation Notes
 
-- One trait per component crate (`mce-state`, `mce-validator`, `mce-generator`, `mce-build`,
-  `mce-verify`, `mce-launch`, `mce-intent`), each with a doc comment listing its prohibited
+- One trait per component crate (`amc-state`, `amc-validator`, `amc-generator`, `amc-build`,
+  `amc-verify`, `amc-launch`, `amc-intent`), each with a doc comment listing its prohibited
   responsibilities verbatim from `SPEC-003`.
-- Stubs return `Err(MceError::unimplemented(Component::X))` — no `todo!()`/`panic!()`.
+- Stubs return `Err(AmcError::unimplemented(Component::X))` — no `todo!()`/`panic!()`.
 - Each crate has a placeholder test asserting the stub is wired.
 
 ## Acceptance Tests

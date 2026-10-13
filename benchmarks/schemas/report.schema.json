@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/benchmarks/report.schema.json",
+  "$id": "https://amc.dev/benchmarks/report.schema.json",
   "title": "Benchmark Run Summary",
   "description": "summary.json produced by the runner (SPEC-005 §26).",
   "type": "object",

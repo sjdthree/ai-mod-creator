@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/benchmarks/intent_case.schema.json",
+  "$id": "https://amc.dev/benchmarks/intent_case.schema.json",
   "title": "Fine-Tuning Intent Unit Test Case",
   "description": "Layer-2 case (SPEC-005 §4). Evaluates only the English -> MCL operation boundary.",
   "type": "object",

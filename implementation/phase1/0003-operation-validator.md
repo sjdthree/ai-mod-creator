@@ -8,7 +8,7 @@
 
 ## Objective
 
-Implement `mce-validator` running the ordered validation sequence that gates every operation
+Implement `amc-validator` running the ordered validation sequence that gates every operation
 before it can mutate candidate state.
 
 ## Background
@@ -23,7 +23,7 @@ relative terms must already be resolved by the adapter; the validator rejects un
 
 ## Implementation Notes
 
-- Stages, halting at first failure (`SPEC-004 §33`): JSON parse → operation schema (`mce-schema`)
+- Stages, halting at first failure (`SPEC-004 §33`): JSON parse → operation schema (`amc-schema`)
   → reference resolution (`phase1/0002`) → property constraints → semantic constraints →
   capability constraints (generator registry) → candidate-state schema → referential integrity.
 - Output: normalized operations + a validation report whose errors carry `code`, `operation`,
@@ -46,4 +46,4 @@ relative terms must already be resolved by the adapter; the validator rejects un
 
 - Product requirement(s): `FR-002`, `NFR-003`.
 - MCL element(s): operations (`SPEC-004 §19`), validation sequence (§33).
-- Component(s): `mce-validator`, `mce-schema`, `mce-state`.
+- Component(s): `amc-validator`, `amc-schema`, `amc-state`.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/schemas/0.1.0/concept.schema.json",
+  "$id": "https://amc.dev/schemas/0.1.0/concept.schema.json",
   "title": "MCL Concept Document",
   "description": "Canonical concept document (SPEC-004 §8).",
   "type": "object",

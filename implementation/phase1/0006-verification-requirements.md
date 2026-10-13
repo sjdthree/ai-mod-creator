@@ -45,4 +45,4 @@ Feeds Layer-4 `E2E-*`; unit `COMP-STATE-*` for requirement mapping.
 
 - Product requirement(s): `FR-005` (automatic verification).
 - MCL element(s): verification requirement (`SPEC-004 §32`), assertions.
-- Component(s): `mce-state` (generation), `mce-verify` (consumption).
+- Component(s): `amc-state` (generation), `amc-verify` (consumption).

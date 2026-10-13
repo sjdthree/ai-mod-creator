@@ -15,12 +15,12 @@ against fabric-api and getting Loom's GameTest run config to emit a clean pass/f
 
 | Crate | Role | Loader coupling |
 |---|---|---|
-| `mce-state` / `mce-validator` | canonical model, transactions | **none** — pure domain |
-| `mce-generator` | state → buildable mod project | **deep** — NeoForge lives here |
-| `mce-build` | `./gradlew build` + log classification | thin — invokes Gradle, classifies output |
-| `mce-verify` | `./gradlew runGameTestServer` | **task-name coupled** |
-| `mce-launch` | `./gradlew runClient` + readiness markers | mostly generic |
-| `mce-cli` | orchestration | constructed concrete `NeoForgeGenerator` (4 call sites) |
+| `amc-state` / `amc-validator` | canonical model, transactions | **none** — pure domain |
+| `amc-generator` | state → buildable mod project | **deep** — NeoForge lives here |
+| `amc-build` | `./gradlew build` + log classification | thin — invokes Gradle, classifies output |
+| `amc-verify` | `./gradlew runGameTestServer` | **task-name coupled** |
+| `amc-launch` | `./gradlew runClient` + readiness markers | mostly generic |
+| `amc-cli` | orchestration | constructed concrete `NeoForgeGenerator` (4 call sites) |
 
 A `Generator` trait already existed (`generator/src/lib.rs`); the CLI bypassed it and called the
 concrete `NeoForgeGenerator` at `main.rs` lines 478, 562, 633, 692. The abstraction seam existed; it
@@ -56,24 +56,24 @@ pick Yarn and every game-class name changes too. **Decision: Mojmap** (see ADR-0
 
 ## Downstream changes (smaller, real)
 
-1. **`mce-verify/gametest.rs`** hardcodes the `runGameTestServer` task. Fabric Loom exposes GameTest
+1. **`amc-verify/gametest.rs`** hardcodes the `runGameTestServer` task. Fabric Loom exposes GameTest
    through a different run config (`runGametest`-style) that must be declared in the generated
    `build.gradle`. Task name + the "required tests passed" log parser both need Fabric verification.
-2. **`mce-build`** — `classify()` is fine; `discover_jar()` needs a Fabric-aware tweak (Loom writes a
+2. **`amc-build`** — `classify()` is fine; `discover_jar()` needs a Fabric-aware tweak (Loom writes a
    remapped jar plus `-dev`/`-sources` siblings under `build/libs/`).
-3. **`mce-launch`** — `READY_MARKERS` are generic Minecraft log lines; should work, needs one real
+3. **`amc-launch`** — `READY_MARKERS` are generic Minecraft log lines; should work, needs one real
    run to confirm. Wrapper assets are loader-agnostic and reused.
 
 ## Effort
 
 - **Architecture (small, ~1 day):** use the `Generator` trait in the CLI; add `--loader`; factor
   `build_files` so the shared vanilla half is common and only Java + Gradle + metadata differ; thread
-  a loader id into `mce-verify` for the right Gradle task. *(This is what step (b) below does.)*
+  a loader id into `amc-verify` for the right Gradle task. *(This is what step (b) below does.)*
 - **The Fabric generator (bulk, ~1–1.5 weeks):** rewrite the Java + Gradle + metadata templates
   against fabric-api, then the iterate-until-it-builds-and-GameTests-pass loop. Loom's GameTest run
   config emitting a clean pass/fail signal is the riskiest single item — budget real time there.
 - **Total realistic estimate: ~2 weeks** for parity (item/weapon/tool/food/block + recipes +
-  creative tabs + GameTests), including a genuine end-to-end `mce request` on Fabric verified by
+  creative tabs + GameTests), including a genuine end-to-end `amc request` on Fabric verified by
   GameTest and a live client.
 
 ## Sinytra Connector

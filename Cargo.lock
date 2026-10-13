@@ -32,6 +32,133 @@ dependencies = [
 ]
 
 [[package]]
+name = "amc-bench"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "amc-schema",
+ "chrono",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "amc-build"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "sha2",
+]
+
+[[package]]
+name = "amc-cli"
+version = "0.3.0"
+dependencies = [
+ "amc-bench",
+ "amc-build",
+ "amc-core",
+ "amc-generator",
+ "amc-intent",
+ "amc-launch",
+ "amc-schema",
+ "amc-state",
+ "amc-validator",
+ "amc-verify",
+ "clap",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "amc-core"
+version = "0.3.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "tracing",
+ "tracing-subscriber",
+ "ulid",
+]
+
+[[package]]
+name = "amc-generator"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "amc-state",
+ "flate2",
+ "png",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
+name = "amc-intent"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "amc-schema",
+ "serde",
+ "serde_json",
+ "sha2",
+ "ureq",
+]
+
+[[package]]
+name = "amc-launch"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+]
+
+[[package]]
+name = "amc-schema"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "jsonschema",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "amc-state"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "amc-schema",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "amc-validator"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "amc-generator",
+ "amc-schema",
+ "amc-state",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "amc-verify"
+version = "0.3.0"
+dependencies = [
+ "amc-core",
+ "amc-state",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -786,133 +913,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d1525a2a28c7f4fa0fc98bb91ae755d1e2d1505079e05539e35bc876b5d65ae9"
 dependencies = [
  "regex-automata",
-]
-
-[[package]]
-name = "mce-bench"
-version = "0.3.0"
-dependencies = [
- "chrono",
- "mce-core",
- "mce-schema",
- "serde",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "mce-build"
-version = "0.3.0"
-dependencies = [
- "mce-core",
- "sha2",
-]
-
-[[package]]
-name = "mce-cli"
-version = "0.3.0"
-dependencies = [
- "clap",
- "mce-bench",
- "mce-build",
- "mce-core",
- "mce-generator",
- "mce-intent",
- "mce-launch",
- "mce-schema",
- "mce-state",
- "mce-validator",
- "mce-verify",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "mce-core"
-version = "0.3.0"
-dependencies = [
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "tracing",
- "tracing-subscriber",
- "ulid",
-]
-
-[[package]]
-name = "mce-generator"
-version = "0.3.0"
-dependencies = [
- "flate2",
- "mce-core",
- "mce-state",
- "png",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
-]
-
-[[package]]
-name = "mce-intent"
-version = "0.3.0"
-dependencies = [
- "mce-core",
- "mce-schema",
- "serde",
- "serde_json",
- "sha2",
- "ureq",
-]
-
-[[package]]
-name = "mce-launch"
-version = "0.3.0"
-dependencies = [
- "mce-core",
-]
-
-[[package]]
-name = "mce-schema"
-version = "0.3.0"
-dependencies = [
- "jsonschema",
- "mce-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "mce-state"
-version = "0.3.0"
-dependencies = [
- "mce-core",
- "mce-schema",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "mce-validator"
-version = "0.3.0"
-dependencies = [
- "mce-core",
- "mce-generator",
- "mce-schema",
- "mce-state",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "mce-verify"
-version = "0.3.0"
-dependencies = [
- "mce-core",
- "mce-state",
- "serde",
- "serde_json",
 ]
 
 [[package]]

@@ -24,7 +24,7 @@ APIs: `DeferredRegister.createItems`, `@Mod` main class, `SimpleTier` + `SwordIt
 
 ## Implementation Notes
 
-- Real `Generator` impl in `mce-generator` taking `&CanonicalState`.
+- Real `Generator` impl in `amc-generator` taking `&CanonicalState`.
 - Package derived from project namespace; mod class = PascalCase(namespace).
 - `ModItems.java`: one `DeferredRegister.Items`; basic items via `registerSimpleItem`; swords via
   `SimpleTier(durability, mining_speed, 0, enchantability, repairIngredient)` + `new SwordItem(tier,
@@ -45,4 +45,4 @@ APIs: `DeferredRegister.createItems`, `@Mod` main class, `SimpleTier` + `SwordIt
 ## Traceability
 
 - Product requirement(s): `FR-004`, `FR-007`.
-- Component(s): `mce-generator`, consumes `mce-state`.
+- Component(s): `amc-generator`, consumes `amc-state`.

@@ -1,4 +1,4 @@
-# 0005 — CLI command surface (mce-cli)
+# 0005 — CLI command surface (amc-cli)
 
 - **Phase:** 0
 - **Workstream:** core-engine
@@ -8,7 +8,7 @@
 
 ## Objective
 
-Expose the full `mce` command surface from day one so the SPEC-006 acceptance sequence exists
+Expose the full `amc` command surface from day one so the SPEC-006 acceptance sequence exists
 as a stable interface, even before behavior is implemented.
 
 ## Background
@@ -31,9 +31,9 @@ as a stable interface, even before behavior is implemented.
 
 ## Acceptance Tests
 
-- `mce --help` lists all subcommands.
-- `mce init ruby_world` returns a structured "unimplemented" result (non-zero exit).
-- `mce bench benchmarks/` runs (delegates to `phase0/0004`).
+- `amc --help` lists all subcommands.
+- `amc init ruby_world` returns a structured "unimplemented" result (non-zero exit).
+- `amc bench benchmarks/` runs (delegates to `phase0/0004`).
 
 ## Benchmark Coverage
 
@@ -42,4 +42,4 @@ None yet; wired in Phase 5.
 ## Traceability
 
 - Product requirement(s): `FR-001` (English interface entry point), primary workflow `SPEC-001 §4`.
-- Component(s): `mce-cli`.
+- Component(s): `amc-cli`.

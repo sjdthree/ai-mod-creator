@@ -1,6 +1,6 @@
 # Dev Container
 
-A Docker container with the full MCE toolchain — **JDK 21** (ADR-0003), Rust, Gradle, and the
+A Docker container with the full AMC toolchain — **JDK 21** (ADR-0003), Rust, Gradle, and the
 Xvfb/GL libraries needed for headless Minecraft client checks. Its purpose is **isolation**: the
 JDK 21 and every build cache live only inside the image and named Docker volumes, so nothing leaks
 to the host or to other repositories.
@@ -13,10 +13,10 @@ to the host or to other repositories.
 
 | Thing | Lives in | Touches host? |
 |---|---|---|
-| JDK 21, Gradle, Xvfb, Rust toolchain | the image (`mce-dev`) | no |
-| Cargo registry cache | volume `mce-cargo` | no |
-| Gradle / NeoForge cache | volume `mce-gradle` | no |
-| Rust build outputs (`target/`) | volume `mce-target` | no (kept off the bind mount) |
+| JDK 21, Gradle, Xvfb, Rust toolchain | the image (`amc-dev`) | no |
+| Cargo registry cache | volume `amc-cargo` | no |
+| Gradle / NeoForge cache | volume `amc-gradle` | no |
+| Rust build outputs (`target/`) | volume `amc-target` | no (kept off the bind mount) |
 | Your source code | bind-mounted `/workspace` | yes — it's your repo, edited normally |
 
 ## Usage (CLI)
@@ -41,7 +41,7 @@ the container shell:
 ```bash
 # 1. Build the engine and generate the Ruby Blade project from canonical state.
 cargo build --workspace
-#    (once `mce` can emit a project to disk; today: exercise the generator via its tests/example)
+#    (once `amc` can emit a project to disk; today: exercise the generator via its tests/example)
 
 # 2. In the generated project directory, materialize the Gradle wrapper and build the mod.
 cd <generated-project>

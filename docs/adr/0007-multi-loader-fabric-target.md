@@ -10,10 +10,10 @@ ADR-0003 pinned a single loader/version — **Minecraft 1.21.1 / NeoForge 21.1.x
 bound the "Minecraft API changes" risk (`SPEC-006`) for the MVP. That pin is still correct as the
 *default* target. But NeoForge and Fabric split the modern-modding ecosystem, and a large class of
 users (QoL / performance / "vanilla-plus" packs, lower-spec machines, players who want the newest
-minor patch fastest) live on **Fabric**. We want MCE to be able to emit a Fabric mod from the same
+minor patch fastest) live on **Fabric**. We want AMC to be able to emit a Fabric mod from the same
 canonical state, without forking the pipeline.
 
-A review of the generator (`crates/mce-generator`) found the coupling is **shallower than it
+A review of the generator (`crates/amc-generator`) found the coupling is **shallower than it
 looks**. The pipeline is `state → generate → build → verify → launch`, and only the *generate* step
 is deeply loader-specific:
 
@@ -25,8 +25,8 @@ is deeply loader-specific:
   (`META-INF/neoforge.mods.toml` vs `fabric.mod.json`), the Gradle build (`net.neoforged.moddev` vs
   `fabric-loom`), and every generated Java class (`@Mod`/`DeferredRegister`/event-bus vs
   `ModInitializer`/`Registry.register`/`ItemGroupEvents`).
-- **Downstream, task-name coupling only:** `mce-verify` hardcodes the `runGameTestServer` Gradle
-  task; `mce-build`/`mce-launch` invoke generic Gradle tasks (`build`, `runClient`) and parse mostly
+- **Downstream, task-name coupling only:** `amc-verify` hardcodes the `runGameTestServer` Gradle
+  task; `amc-build`/`amc-launch` invoke generic Gradle tasks (`build`, `runClient`) and parse mostly
   loader-neutral logs.
 
 A `Generator` trait already exists (`generator/src/lib.rs`); the CLI simply constructed the concrete
@@ -49,7 +49,7 @@ metadata differ.
 
 ## Decision
 
-1. **Introduce a `Loader` enum** (`NeoForge`, `Fabric`) in `mce-generator` and select a generator
+1. **Introduce a `Loader` enum** (`NeoForge`, `Fabric`) in `amc-generator` and select a generator
    through a `generator_for(loader)` factory returning `Box<dyn Generator>`. NeoForge remains the
    default; its emitted output stays **byte-identical** (the determinism guarantee of `SPEC-005 §22`
    is preserved and asserted by existing tests).
@@ -59,7 +59,7 @@ metadata differ.
    only its metadata + Gradle build + Java.
 3. **Thread the loader through the CLI and verify step.** A global `--loader` flag (default
    `neoforge`) selects the generator; `Loader::gametest_task()` supplies the correct Gradle task name
-   to `mce-verify` so Fabric's GameTest run config is invoked correctly.
+   to `amc-verify` so Fabric's GameTest run config is invoked correctly.
 4. **Add a Fabric target pin** alongside ADR-0003: **Minecraft 1.21.1 / Fabric Loader + Fabric API /
    `fabric-loom` / Java 21 / Mojmap**. Exact versions are locked in the Fabric generator constants
    and recorded in the generation manifest's target field (`fabric-1.21.1`).

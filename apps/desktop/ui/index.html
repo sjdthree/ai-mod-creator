@@ -722,7 +722,7 @@ async function doCreate(){
     const res = await withTimeout(
       engine.request(current.project, text, current.refine, onStage),
       420000,
-      `This is taking unusually long and may be stuck. The very first build downloads Minecraft/${window.MCE_LOADER_LABEL} once — tap ↻ Try again to give it another go; if it keeps happening, restart the app.`);
+      `This is taking unusually long and may be stuck. The very first build downloads Minecraft/${window.AMC_LOADER_LABEL} once — tap ↻ Try again to give it another go; if it keeps happening, restart the app.`);
     if (timer) clearInterval(timer);
     current.lastResult = res;
     await handleResult(states, res, prov);
@@ -763,7 +763,7 @@ async function doPlay(){
   // The FIRST Quick Test downloads the bundled Minecraft 1.21.1 + NeoForge sandbox once — that can take a
   // few MINUTES, not the ~30–60s a warmed-up launch takes. Say so up front (so it doesn't read as frozen),
   // and once one has succeeded, remember it and drop back to the fast-path wording.
-  const FIRST_QT_KEY = "mce.quicktested";
+  const FIRST_QT_KEY = "amc.quicktested";
   const firstRun = !localStorage.getItem(FIRST_QT_KEY);
   if (firstRun){
     heads += "  ⓘ First run downloads the sandbox once — this can take a few minutes; it's quick after that.";
@@ -771,8 +771,8 @@ async function doPlay(){
   toast(heads, current.lastCreateOk === false ? "warn" : null, firstRun ? 12000 : 9000);
   playing = true;
   const baseMsg = firstRun
-    ? `first Quick Test: setting up the Minecraft 1.21.1 + ${window.MCE_LOADER_LABEL} sandbox (one-time download, a few minutes)`
-    : `opening the sandbox Minecraft 1.21.1 + ${window.MCE_LOADER_LABEL}… (~30–60s)`;
+    ? `first Quick Test: setting up the Minecraft 1.21.1 + ${window.AMC_LOADER_LABEL} sandbox (one-time download, a few minutes)`
+    : `opening the sandbox Minecraft 1.21.1 + ${window.AMC_LOADER_LABEL}… (~30–60s)`;
   // A live elapsed-time ticker so a long first-run download visibly stays alive instead of looking hung.
   const t0 = Date.now();
   const fmt = s => s >= 60 ? `${Math.floor(s/60)}m ${s%60}s` : `${s}s`;
@@ -795,7 +795,7 @@ async function doPlay(){
     setTimeout(()=>{ $("#enginestat").textContent = inTauri ? "AI model ready" : "demo mode (no engine)"; }, 6000);
   }
 }
-const MODS_KEY = "mce.modsDir";
+const MODS_KEY = "amc.modsDir";
 async function chooseModsFolder(force){
   let dir = force ? null : localStorage.getItem(MODS_KEY);
   if (!dir){
@@ -819,7 +819,7 @@ async function doExport(ev){
   $("#enginestat").textContent = "adding to your Minecraft…";
   try {
     const r = await engine.exportMod(current.project, dir);
-    const L = window.MCE_LOADER_LABEL;
+    const L = window.AMC_LOADER_LABEL;
     // `info.compatible` is loader-aware (NeoForge profile, or Fabric Loader + Fabric API). If their
     // game isn't set up for the active loader, the copied jar won't load — say so and offer one-click setup.
     if (info.compatible === false){
@@ -838,7 +838,7 @@ async function doExport(ev){
 // Non-modal one-click loader setup: a toast with a real button (no native confirm to freeze the app).
 // Installs whichever loader is active (Fabric → Loader + API; NeoForge → NeoForge profile).
 async function showSetupLoader(){
-  const L = window.MCE_LOADER_LABEL;
+  const L = window.AMC_LOADER_LABEL;
   const box = document.getElementById("toasts"); if (!box) return;
   const el = document.createElement("div"); el.className = "toast warn";
   el.innerHTML = `Want me to install <b>Minecraft 1.21.1 + ${L}</b> for you? (Adds a profile${L === "Fabric" ? " + the Fabric API mod" : ""}; won't touch your worlds.)<br>`;
@@ -862,7 +862,7 @@ async function showSetupLoader(){
 
 // A toast that offers to actually launch the game: "run your Minecraft loader — or click here".
 function offerLaunch(prefix){
-  const L = window.MCE_LOADER_LABEL;
+  const L = window.AMC_LOADER_LABEL;
   const profile = L === "Fabric" ? "fabric-loader 1.21.1" : "NeoForge 1.21.1";
   const box = document.getElementById("toasts"); if (!box) return;
   const el = document.createElement("div"); el.className = "toast";
@@ -925,12 +925,12 @@ async function ensureModelReady(){
 $("#themebtn").onclick = ()=>{ const r=document.documentElement; const cur=r.getAttribute("data-theme")|| (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"); r.setAttribute("data-theme", cur==="dark"?"light":"dark"); };
 
 // ---- active mod loader: show which loader (Fabric / NeoForge) this session is building for, so
-// leftover jars from the other loader can't be mistaken for the new one. Set at launch via MCE_LOADER.
-window.MCE_LOADER_LABEL = "Fabric";
+// leftover jars from the other loader can't be mistaken for the new one. Set at launch via AMC_LOADER.
+window.AMC_LOADER_LABEL = "Fabric";
 async function showLoader(){
   let info; try { info = await engine.loaderInfo(); } catch(e){ info = {loader:"fabric", label:"Fabric", minecraft:"1.21.1"}; }
   const label = info.label || "Fabric", mc = info.minecraft || "1.21.1";
-  window.MCE_LOADER_LABEL = label;
+  window.AMC_LOADER_LABEL = label;
   const b = $("#loaderbadge");
   if (b){
     b.textContent = label + " · MC " + mc;

@@ -1,0 +1,18 @@
+[package]
+name = "amc-bench"
+description = "Benchmark runner: discovers the corpus, runs suites, emits reports (SPEC-005 §25-§26). Phase 0: empty-suite runner."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+amc-core.workspace = true
+amc-schema.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

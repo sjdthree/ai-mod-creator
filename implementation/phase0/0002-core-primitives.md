@@ -1,4 +1,4 @@
-# 0002 — Core primitives (mce-core)
+# 0002 — Core primitives (amc-core)
 
 - **Phase:** 0
 - **Workstream:** core-engine
@@ -23,7 +23,7 @@ metadata). `SPEC-001 NFR-002` (transparent errors).
 
 ## Implementation Notes
 
-- `tracing` for logging; a `MceError` enum with an `Unimplemented` variant carrying the
+- `tracing` for logging; a `AmcError` enum with an `Unimplemented` variant carrying the
   owning-component tag (`SPEC-005 §17`).
 - `new_id(prefix)` produces sortable IDs (`concept-…`, `tx-000001` style). IDs must never be
   derived solely from display names.
@@ -44,4 +44,4 @@ metadata). `SPEC-001 NFR-002` (transparent errors).
 
 - Product requirement(s): `FR-007` (repeatability), `NFR-003` (reliability).
 - MCL element(s): identifier rules `SPEC-004 §5`.
-- Component(s): `mce-core`.
+- Component(s): `amc-core`.

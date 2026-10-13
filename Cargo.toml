@@ -27,16 +27,16 @@ anyhow = "1"
 ureq = "2"
 
 # internal crates
-mce-core = { path = "crates/mce-core" }
-mce-schema = { path = "crates/mce-schema" }
-mce-state = { path = "crates/mce-state" }
-mce-validator = { path = "crates/mce-validator" }
-mce-generator = { path = "crates/mce-generator" }
-mce-build = { path = "crates/mce-build" }
-mce-verify = { path = "crates/mce-verify" }
-mce-launch = { path = "crates/mce-launch" }
-mce-intent = { path = "crates/mce-intent" }
-mce-bench = { path = "crates/mce-bench" }
+amc-core = { path = "crates/amc-core" }
+amc-schema = { path = "crates/amc-schema" }
+amc-state = { path = "crates/amc-state" }
+amc-validator = { path = "crates/amc-validator" }
+amc-generator = { path = "crates/amc-generator" }
+amc-build = { path = "crates/amc-build" }
+amc-verify = { path = "crates/amc-verify" }
+amc-launch = { path = "crates/amc-launch" }
+amc-intent = { path = "crates/amc-intent" }
+amc-bench = { path = "crates/amc-bench" }
 
 [profile.release]
 lto = "thin"

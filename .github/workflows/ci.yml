@@ -45,8 +45,8 @@ jobs:
 
       - name: Benchmark runner — empty suite smoke
         env:
-          MCE_SOURCE_COMMIT: ${{ github.sha }}
-        run: cargo run -p mce-cli -- bench benchmarks/ --json
+          AMC_SOURCE_COMMIT: ${{ github.sha }}
+        run: cargo run -p amc-cli -- bench benchmarks/ --json
 
   # ---- Deferred tiers (enabled in later phases) ----
   # These are documented here so the SPEC-005 §28 schedule is visible from day one. They are

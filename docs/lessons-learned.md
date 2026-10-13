@@ -1,6 +1,6 @@
 # Lessons Learned
 
-A running log of non-obvious engineering lessons from building MCE. Newest first. These
+A running log of non-obvious engineering lessons from building AMC. Newest first. These
 complement the ADRs (`docs/adr/`), which record *decisions*; this file records *lessons*.
 
 ## GameTest verification works; the friction is datapack folder names, not discovery (Phase 3)
@@ -35,9 +35,9 @@ represents *generated-implementation* identity, not internal bookkeeping — has
 
 ## Validator vs. state manager: split the 8-stage sequence by ownership (Phase 1)
 
-`SPEC-004 §33` lists eight validation stages. We split them: `mce-validator` owns stages 1–6
+`SPEC-004 §33` lists eight validation stages. We split them: `amc-validator` owns stages 1–6
 (structural → operation schema → reference resolution → property constraints → semantic
-constraints → capability) and emits **normalized** operations; `mce-state` enforces stages 7–8
+constraints → capability) and emits **normalized** operations; `amc-state` enforces stages 7–8
 (candidate-state schema + referential integrity) while *constructing* the candidate. This avoids
 two components both trying to own referential integrity, and keeps the validator side-effect-free.
 

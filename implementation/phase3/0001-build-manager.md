@@ -1,4 +1,4 @@
-# 0001 — Build Manager (mce-build)
+# 0001 — Build Manager (amc-build)
 
 - **Phase:** 3
 - **Workstream:** mc-integration
@@ -46,4 +46,4 @@ build result, logs, JAR, checksum, classified failure). ADR-0003 pin.
 ## Traceability
 
 - Product requirement(s): `FR-005`, `NFR-003`.
-- Component(s): `mce-build`, consumes `mce-generator` output.
+- Component(s): `amc-build`, consumes `amc-generator` output.
