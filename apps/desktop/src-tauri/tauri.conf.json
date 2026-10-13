@@ -25,8 +25,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "externalBin": ["binaries/mce", "binaries/llama-server"],
-    "resources": ["resources/models", "resources/mce-ops.gbnf", "resources/licenses"],
+    "externalBin": ["binaries/amc", "binaries/llama-server"],
+    "resources": ["resources/models", "resources/amc-ops.gbnf", "resources/licenses"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

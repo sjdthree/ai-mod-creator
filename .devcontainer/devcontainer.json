@@ -1,5 +1,5 @@
 {
-  "name": "mce",
+  "name": "amc",
   "build": {
     "dockerfile": "Dockerfile",
     "context": "."
@@ -7,9 +7,9 @@
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "mounts": [
-    "source=mce-cargo,target=/home/dev/.cargo/registry,type=volume",
-    "source=mce-gradle,target=/home/dev/.gradle,type=volume",
-    "source=mce-target,target=/home/dev/target,type=volume"
+    "source=amc-cargo,target=/home/dev/.cargo/registry,type=volume",
+    "source=amc-gradle,target=/home/dev/.gradle,type=volume",
+    "source=amc-target,target=/home/dev/target,type=volume"
   ],
   "remoteUser": "dev",
   "customizations": {

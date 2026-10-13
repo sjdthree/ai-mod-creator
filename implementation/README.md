@@ -1,8 +1,8 @@
 # Living Engineering Backlog
 
-This directory is the **living engineering backlog** for the Minecraft Creation Engine (MCE),
+This directory is the **living engineering backlog** for the AI-mod creator (AMC),
 as mandated by `SPEC-006` (Implementation Roadmap). The six specification documents in
-`../Minecraft_Creation_Engine_Engineering_Package_v1.0/` are the **stable contract** and change
+`../AI_Mod_Creator_Engineering_Package_v1.0/` are the **stable contract** and change
 slowly. Day-to-day work is tracked here as small, independently testable **work items**.
 
 ## How it works

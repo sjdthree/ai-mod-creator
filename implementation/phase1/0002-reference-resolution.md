@@ -45,4 +45,4 @@ id) to stable concept IDs before any state mutation.
 
 - Product requirement(s): `FR-003` (incremental modification).
 - MCL element(s): references (`SPEC-004 §6`), selectors.
-- Component(s): `mce-state`.
+- Component(s): `amc-state`.

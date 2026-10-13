@@ -24,7 +24,7 @@ Adopt a **tiered local inference** architecture:
 | Clarification text | templates or a small instruct model | concise player-facing questions |
 | Standard implementation | **no LLM** | the deterministic MCL compiler (already built) |
 | Complex planning | conditional 1B–3B instruct | decompose into multiple supported operations |
-| Custom extension / hard repair | conditional local 3B–7B coder | minimal extension code against MCE's **stable internal API** |
+| Custom extension / hard repair | conditional local 3B–7B coder | minimal extension code against AMC's **stable internal API** |
 | Verification | deterministic | build, GameTest, logs, pass/fail |
 
 FunctionGemma stays resident (well under 1 GB quantized); larger specialists load **only when
@@ -39,7 +39,7 @@ needed** and are unloaded/paused before launching Minecraft (which itself wants 
   MCL operation set (`SPEC-004 §19`).
 - **Constrained decoding guarantees syntax, not meaning.** Keep the four validation levels:
   grammar → schema → **semantic** (IDs/refs/ranges/combinations) → **Minecraft capability**. The
-  `mce-validator` staged pipeline already implements grammar/schema/reference/property/semantic/
+  `amc-validator` staged pipeline already implements grammar/schema/reference/property/semantic/
   capability; this ADR affirms that split.
 - **The model never edits generated files.** Failures route by ownership (`SPEC-005 §17`): bad
   model output → FunctionGemma retry/clarify; bad MCL semantics → deterministic fix/clarify;
@@ -56,5 +56,5 @@ Java or explain Minecraft APIs.
 
 - Resident memory stays tiny; correctness improves by keeping each model narrow.
 - As the deterministic coverage grows, model size matters progressively less.
-- Custom-behavior seam (`generated/` overwritten, `extensions/` never, `project.mce.json` = source
+- Custom-behavior seam (`generated/` overwritten, `extensions/` never, `project.amc.json` = source
   of truth) becomes the key boundary for the specialist tier — tracked as its own work item.

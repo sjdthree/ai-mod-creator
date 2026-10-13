@@ -1,4 +1,4 @@
-# MCE dev container — full toolchain for building & verifying generated NeoForge mods, isolated
+# AMC dev container — full toolchain for building & verifying generated NeoForge mods, isolated
 # from the host. JDK 21 (ADR-0003), Rust, Gradle, and the headless-client libs live ONLY in this
 # image and its named volumes. Nothing here touches the host's Java/Gradle/Rust or other repos.
 FROM eclipse-temurin:21-jdk-jammy
@@ -35,7 +35,7 @@ RUN mkdir -p /home/${USER}/.cargo/registry /home/${USER}/.gradle /home/${USER}/t
 
 USER ${USER}
 
-# Rust toolchain for the mce-* workspace (stable + fmt + clippy), installed into the user's home.
+# Rust toolchain for the amc-* workspace (stable + fmt + clippy), installed into the user's home.
 ENV PATH=/home/${USER}/.cargo/bin:${PATH}
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
         | sh -s -- -y --default-toolchain stable --profile minimal -c rustfmt -c clippy

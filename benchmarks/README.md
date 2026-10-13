@@ -1,6 +1,6 @@
-# MCE Benchmark Corpus
+# AMC Benchmark Corpus
 
-Layout and rules per `SPEC-005 §24`. The runner (`mce bench`) discovers **runnable** cases under
+Layout and rules per `SPEC-005 §24`. The runner (`amc bench`) discovers **runnable** cases under
 `intent/`, `integration/`, and `e2e/`. Everything else is support data.
 
 ```text
@@ -29,6 +29,6 @@ suite is authored in Phase 6 (`implementation/phase6/`).
 ## Running
 
 ```bash
-mce bench benchmarks/ --json
-mce bench benchmarks/e2e --category create
+amc bench benchmarks/ --json
+amc bench benchmarks/e2e --category create
 ```

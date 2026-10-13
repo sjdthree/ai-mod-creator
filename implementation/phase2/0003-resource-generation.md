@@ -38,4 +38,4 @@ Generate the client resources each concept needs: item model JSON and localized 
 ## Traceability
 
 - Product requirement(s): `FR-004`.
-- Component(s): `mce-generator`.
+- Component(s): `amc-generator`.

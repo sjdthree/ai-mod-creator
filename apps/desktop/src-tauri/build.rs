@@ -6,7 +6,7 @@ fn main() {
         .find_map(|l| l.trim().strip_prefix("name="))
         .expect("model.lock has a name= line")
         .trim();
-    println!("cargo:rustc-env=MCE_MODEL_NAME={name}");
+    println!("cargo:rustc-env=AMC_MODEL_NAME={name}");
     println!("cargo:rerun-if-changed=../../../model.lock");
     tauri_build::build();
 }

@@ -23,9 +23,9 @@ None.
 ## Implementation Notes
 
 - Workspace root `Cargo.toml` with members under `crates/`.
-- Crates: `mce-core`, `mce-schema`, `mce-state`, `mce-validator`, `mce-generator`,
-  `mce-build`, `mce-verify`, `mce-launch`, `mce-intent`, `mce-bench`, `mce-cli`.
-- `mce-cli` is the only binary; it may orchestrate but must not interpret intent, mutate
+- Crates: `amc-core`, `amc-schema`, `amc-state`, `amc-validator`, `amc-generator`,
+  `amc-build`, `amc-verify`, `amc-launch`, `amc-intent`, `amc-bench`, `amc-cli`.
+- `amc-cli` is the only binary; it may orchestrate but must not interpret intent, mutate
   state, or generate code (`SPEC-003 §3` prohibited responsibilities).
 
 ## Acceptance Tests

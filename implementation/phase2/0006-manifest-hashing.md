@@ -39,4 +39,4 @@ stable `output_hash` proving byte-level reproducibility.
 ## Traceability
 
 - Product requirement(s): `FR-007` (repeatability).
-- Component(s): `mce-generator`.
+- Component(s): `amc-generator`.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/benchmarks/e2e_case.schema.json",
+  "$id": "https://amc.dev/benchmarks/e2e_case.schema.json",
   "title": "Full-Loop End-to-End Case",
   "description": "Layer-4 case (SPEC-005 §13). English -> verified gameplay.",
   "type": "object",

@@ -7,7 +7,7 @@ state; state hashes are deterministic. Depends on Phase 0.
 
 | Item | Title | Effort | Status |
 |---|---|---|---|
-| [0001](./0001-mcl-data-model.md) | MCL data model (`mce-state`) | Medium | ✅ Done |
+| [0001](./0001-mcl-data-model.md) | MCL data model (`amc-state`) | Medium | ✅ Done |
 | [0002](./0002-reference-resolution.md) | Reference resolution | Medium | ✅ Done |
 | [0003](./0003-operation-validator.md) | Operation validator (stages 1–6) | Large | ✅ Done |
 | [0004](./0004-transactions.md) | Transactions, candidate state & commit | Large | ✅ Done |
@@ -31,4 +31,4 @@ carries verification requirements (`SPEC-004 §32`).
 
 `0001` → `0002` → `0004` → `0005` → `0006` → `0003`. The data model and transactions unblock the
 most; the full 8-stage validator (`0003`) can land last since early slices use direct schema
-validation via `mce-schema`.
+validation via `amc-schema`.

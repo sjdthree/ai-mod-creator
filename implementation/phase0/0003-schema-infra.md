@@ -1,4 +1,4 @@
-# 0003 — MCL schema infrastructure (mce-schema)
+# 0003 — MCL schema infrastructure (amc-schema)
 
 - **Phase:** 0
 - **Workstream:** core-engine
@@ -45,4 +45,4 @@ deterministic test that runs on every commit).
 
 - Product requirement(s): `FR-004` (deterministic generation contract), `FR-002` (canonical state).
 - MCL element(s): all document types.
-- Component(s): `mce-schema`.
+- Component(s): `amc-schema`.

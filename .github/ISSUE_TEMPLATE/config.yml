@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Specifications (engineering contract)
-    url: https://github.com/sjdthree/ai-mod-creator/tree/main/Minecraft_Creation_Engine_Engineering_Package_v1.0
+    url: https://github.com/sjdthree/ai-mod-creator/tree/main/AI_Mod_Creator_Engineering_Package_v1.0
     about: Read the six SPEC documents before filing. They are the stable contract.
   - name: Living engineering backlog
     url: https://github.com/sjdthree/ai-mod-creator/tree/main/implementation

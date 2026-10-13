@@ -5,7 +5,7 @@
   "revision": 1,
   "project": {
     "name": "Ruby World",
-    "namespace": "mce_ruby_world",
+    "namespace": "amc_ruby_world",
     "minecraft_target": {
       "loader": "neoforge",
       "minecraft_version": "1.21.1",

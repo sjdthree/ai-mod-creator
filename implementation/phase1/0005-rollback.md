@@ -40,4 +40,4 @@ before commit), `SPEC-001 FR-006`.
 
 - Product requirement(s): `FR-006`.
 - MCL element(s): `revert_change` (`SPEC-004 §30`), transaction statuses (§31).
-- Component(s): `mce-state`.
+- Component(s): `amc-state`.

@@ -26,7 +26,7 @@ are disposable. `SPEC-004 §31` (transactions), `SPEC-001 FR-006` (rollback).
 - SQLite as the transactional system of record: transactions, normalized operations, state hashes,
   stable IDs, verification-requirement records, project metadata. Canonical **JSON** for document
   bodies (validation/patches/hashing/migrations).
-- `project.mce.json` (or the DB) is the permanent source of truth; `generated/` is overwritten each
+- `project.amc.json` (or the DB) is the permanent source of truth; `generated/` is overwritten each
   run; `extensions/` (custom behavior, later) is never overwritten.
 - Keep the deterministic `state_hash` unchanged; timestamps stay out of the hash.
 
@@ -39,4 +39,4 @@ are disposable. `SPEC-004 §31` (transactions), `SPEC-001 FR-006` (rollback).
 
 - Product requirement(s): `FR-002`, `FR-006`, `NFR-003`.
 - MCL element(s): transaction `SPEC-004 §31`.
-- Component(s): `mce-state`.
+- Component(s): `amc-state`.
