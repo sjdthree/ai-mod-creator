@@ -9,7 +9,7 @@
 #   - The installers already built (or pass -Build to run build_windows.ps1 first).
 #
 # The release is created if it doesn't exist yet, and assets are uploaded with --clobber so re-running
-# replaces them in place (idempotent). The build is NOT code-signed — see docs/INSTALL.md for the
+# replaces them in place (idempotent). The build is NOT code-signed - see docs/INSTALL.md for the
 # SmartScreen note users will see.
 
 param(
@@ -28,7 +28,7 @@ Set-Location $repo
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
   throw "GitHub CLI (gh) not found. Install from https://cli.github.com/ and run 'gh auth login'."
 }
-try { gh auth status 1>$null } catch { throw "gh is not authenticated — run 'gh auth login' first." }
+try { gh auth status 1>$null } catch { throw "gh is not authenticated - run 'gh auth login' first." }
 
 if ($Build) {
   Write-Host "== building installers first (build_windows.ps1) =="
@@ -42,8 +42,8 @@ $exe = Get-ChildItem -Path (Join-Path $bundle "nsis") -Filter *.exe -ErrorAction
        Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
 $assets = @()
-if ($msi) { $assets += $msi.FullName } else { Write-Warning "no .msi found under $bundle\msi — did build_windows.ps1 run?" }
-if ($exe) { $assets += $exe.FullName } else { Write-Warning "no -setup.exe found under $bundle\nsis — did build_windows.ps1 run?" }
+if ($msi) { $assets += $msi.FullName } else { Write-Warning "no .msi found under $bundle\msi - did build_windows.ps1 run?" }
+if ($exe) { $assets += $exe.FullName } else { Write-Warning "no -setup.exe found under $bundle\nsis - did build_windows.ps1 run?" }
 if ($assets.Count -eq 0) { throw "No installers to publish. Run build_windows.ps1 (or pass -Build)." }
 
 Write-Host "== assets to publish =="
@@ -55,7 +55,7 @@ try { gh release view $Tag 1>$null 2>$null; if ($LASTEXITCODE -ne 0) { $exists =
 
 if (-not $exists) {
   if (-not $Title) { $Title = "AI-mod creator $Tag" }
-  if (-not $Notes) { $Notes = "Windows installer for AI-mod creator ($Tag). Not code-signed yet — Windows SmartScreen may warn: More info -> Run anyway. See docs/INSTALL.md." }
+  if (-not $Notes) { $Notes = "Windows installer for AI-mod creator ($Tag). Not code-signed yet - Windows SmartScreen may warn: More info -> Run anyway. See docs/INSTALL.md." }
   Write-Host "== creating release $Tag =="
   $args = @("release","create",$Tag,"--title",$Title,"--notes",$Notes)
   if ($Draft) { $args += "--draft" }
