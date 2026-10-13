@@ -18,6 +18,8 @@ const STORE_DIR: &str = ".amc";
 /// The store's pre-rename name; moved to [`STORE_DIR`] the first time a project is opened.
 const LEGACY_STORE_DIR: &str = ".mce";
 const STATE_FILE: &str = "state.json";
+/// Held (OS file lock) by whichever `amc` process is changing the project; see [`lock`].
+const LOCK_FILE: &str = "lock";
 /// Subdirectory holding the generated NeoForge project (the Gradle build root).
 pub const MOD_SUBDIR: &str = "mod";
 
@@ -116,6 +118,41 @@ pub fn load(project: &Path) -> Result<ProjectStateManager> {
     ))
 }
 
+/// An exclusive hold on a project, released when dropped (or when the process exits, even on a crash,
+/// since the OS owns the lock). Every command that changes the project or its `mod/` build takes one,
+/// so two `amc` processes (the app and the CLI, or two app windows) can't both load the same state and
+/// have the later save silently drop the earlier change.
+#[derive(Debug)]
+pub struct ProjectLock {
+    _file: std::fs::File,
+}
+
+/// Why [`lock`] could not take the project.
+#[derive(Debug)]
+pub enum LockError {
+    /// Another `amc` process holds the project.
+    Busy,
+    /// The lock file couldn't be opened or locked.
+    Io(std::io::Error),
+}
+
+/// Take the project's exclusive lock without waiting.
+pub fn lock(project: &Path) -> std::result::Result<ProjectLock, LockError> {
+    let dir = store_dir(project);
+    std::fs::create_dir_all(&dir).map_err(LockError::Io)?;
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .open(dir.join(LOCK_FILE))
+        .map_err(LockError::Io)?;
+    match file.try_lock() {
+        Ok(()) => Ok(ProjectLock { _file: file }),
+        Err(std::fs::TryLockError::WouldBlock) => Err(LockError::Busy),
+        Err(std::fs::TryLockError::Error(e)) => Err(LockError::Io(e)),
+    }
+}
+
 /// Persist a state manager's canonical state + bookkeeping to `.amc/state.json` (atomically).
 pub fn save(project: &Path, sm: &ProjectStateManager) -> Result<()> {
     std::fs::create_dir_all(store_dir(project))?;
@@ -161,6 +198,18 @@ mod tests {
         assert!(init(&dir, "Test Project").is_err());
         let sm = load(&dir).unwrap();
         assert_eq!(sm.canonical().namespace, "amc_test_project");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn lock_is_exclusive_until_dropped() {
+        let dir = std::env::temp_dir().join(format!("amc-lock-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        init(&dir, "Lock Test").unwrap();
+        let held = lock(&dir).expect("first lock");
+        assert!(matches!(lock(&dir), Err(LockError::Busy)));
+        drop(held);
+        assert!(lock(&dir).is_ok(), "the lock is free again once dropped");
         std::fs::remove_dir_all(&dir).ok();
     }
 }

@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+- **Fix: a change could be silently lost.** Two `amc` processes working on the same project (the app
+  and the CLI, or two app windows) could both load it, and the one that saved last dropped the other's
+  creation, even though both reported success. Commands that change a project now hold an exclusive
+  lock on it, and a second one gets `project_busy` and changes nothing. The desktop app explains it,
+  holds Quick Test while a create is running, and clears a result card whose creation is no longer
+  in the project. Building from source now needs Rust 1.89 or newer.
 - **Desktop:** after a create, the result card and sidebar use the name the engine gave the creation
   (it showed a guessed name like "Pickaxe Durability"), and the new creation is highlighted in the
   sidebar. A successful create no longer shows the failure buttons, including an empty green one.
