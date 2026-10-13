@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format is based on
 - **Desktop:** the model server now stops when the app quits, and Quick Test only reports the game
   as open once its window is up.
 - **Windows:** the build scripts are plain ASCII, so Windows PowerShell 5.1 can run them.
+- **Docs:** install and user docs now say what the desktop app actually builds: Fabric mods (Fabric
+  Loader + Fabric API). The `amc` CLI still defaults to NeoForge.
 - **Security:** `rustls` 0.23.45 ([GHSA-2mjx-qc3c-rqvc](https://github.com/advisories/GHSA-2mjx-qc3c-rqvc)).
 
 ## [0.3.0] — 2026-10-12 — first public alpha

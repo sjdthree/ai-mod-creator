@@ -41,7 +41,7 @@ Requires an Apple-Silicon Mac (M1 or newer) and macOS 12+.
      build is planned; until then this warning is normal and not a sign of a bad download.)
 3. **Launch “AI-mod creator”** from the Start menu. The footer shows **“starting the AI model… →
    AI model ready”** (a few seconds the first time while it loads the model).
-4. The **first Quick Test** downloads the Minecraft/NeoForge files once (a few minutes); after that it’s
+4. The **first Quick Test** downloads the Minecraft/Fabric files once (a few minutes); after that it’s
    about a minute.
 
 Your creations are saved in `%USERPROFILE%\ai-mod-creator\`; uninstall via *Settings → Apps*. Needs
@@ -52,14 +52,14 @@ Your creations are saved in `%USERPROFILE%\ai-mod-creator\`; uninstall via *Sett
 ## 4. Make your first mod
 
 1. Type what you want, e.g. **`a ruby sword called Sting with 9 attack damage`** — or click one of the
-   example chips — and press **Create**. First build takes ~30–60s (it downloads Minecraft/NeoForge
+   example chips — and press **Create**. First build takes ~30–60s (it downloads Minecraft/Fabric
    once and caches it); after that it's ~10s.
 2. When it says **verified ✓**, click **▶ Quick Test** — this launches a bundled **Minecraft 1.21.1 +
-   NeoForge** sandbox so you can play your creation immediately, no setup, without touching your own worlds.
+   Fabric** sandbox so you can play your creation immediately, no setup, without touching your own worlds.
 3. In-world you're in Creative mode: press **E**, open the **Combat / Tools / Building-Blocks** tab (or
    search your item's name) — there it is.
 4. Keep going: create more items, refine them, and **Undo** anything. When you're happy, **Add to my
-   Minecraft** copies the mod into your own game (it offers to set up Minecraft 1.21.1 + NeoForge for you
+   Minecraft** copies the mod into your own game (it offers to set up Minecraft 1.21.1 + Fabric for you
    if you don't have it yet).
 
 **Tips**
@@ -77,5 +77,5 @@ Your creations are saved in `%USERPROFILE%\ai-mod-creator\`; uninstall via *Sett
 | “can’t be opened — unidentified developer” | Right-click → **Open** (step 3), or `xattr -cr` the app. |
 | Footer stuck on “starting the AI model…” | Give it ~30s on first launch; if it says *unavailable*, reopen the app. |
 | Create fails / “didn’t pass its test” | Tap **↻ Try again** (the small model occasionally has an off run). |
-| “Add to my Minecraft” says it won’t load | Your Minecraft isn’t 1.21.1 + NeoForge — use **Quick Test**, or let the app **set it up for you**. |
+| “Add to my Minecraft” says it won’t load | Your Minecraft isn’t 1.21.1 with Fabric Loader + Fabric API — use **Quick Test**, or let the app **set it up for you**. |
 | Build never finishes | Make sure **Java 21** (step 1) is installed. |
