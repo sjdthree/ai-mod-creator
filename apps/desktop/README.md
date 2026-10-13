@@ -44,8 +44,7 @@ AMC_BIN="$(git rev-parse --show-toplevel)/target/debug/amc" cargo tauri dev
 ```
 Dev prerequisites: **Rust** (nightly — see `rust-toolchain.toml`), the **Tauri CLI**
 (`cargo install tauri-cli --version "^2.0" --locked`), **JDK 21**, and the **AMC Model runtime**
-fetched once with `./scripts/fetch_model.sh` into `models/ai-mod-create-270smol/` (from Hugging Face; set `HF_TOKEN`
-while the repo is private) plus a `llama-server` on PATH. The app starts the model itself — you don’t run a
+fetched once with `./scripts/fetch_model.sh` into `models/ai-mod-create-270smol/` (from Hugging Face) plus a `llama-server` on PATH. The app starts the model itself — you don’t run a
 server by hand. `$AMC_MODEL_DIR` points it at a different model build.
 
 ## Build the Windows installer (.msi / .exe)
@@ -65,7 +64,7 @@ git pull
 powershell -ExecutionPolicy Bypass -File apps\desktop\scripts\build_windows.ps1
 ```
 That one script: builds `amc.exe`, builds a **static** `llama-server.exe`, fetches the model pinned in
-`model.lock` from Hugging Face (`$env:HF_TOKEN` while the repo is private) and checks it with
+`model.lock` from Hugging Face and checks it with
 `amc model verify`, stages the
 grammar + license notices, and runs `cargo tauri build`. Output:
 ```

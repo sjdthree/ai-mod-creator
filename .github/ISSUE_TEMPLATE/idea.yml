@@ -1,0 +1,22 @@
+name: "Idea: I wish it could..."
+description: Something you'd like AI-mod creator to make or do.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: wish
+    attributes:
+      label: What would you like to make?
+      description: Describe it the way you'd type it into the app, plus how it should behave in the game.
+      placeholder: a glowing lantern block that lights up when it's night
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What happens today?
+      description: Did you try it? What did the app do or say?
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Examples from other mods, sketches, or why it matters to you.

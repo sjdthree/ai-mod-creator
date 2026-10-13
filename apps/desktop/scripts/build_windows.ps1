@@ -48,7 +48,7 @@ Copy-Item $llamaExe.FullName (Join-Path $binaries "llama-server-$triple.exe") -F
 
 # 3) the model pinned in model.lock, from Hugging Face - amc-model.json (sha256-pinned by model.lock) +
 #    the GGUF it names, then verified against this engine (contract/grammar pins + weights sha256).
-#    While the Hugging Face repo is private, set $env:HF_TOKEN.
+#    No login needed (the model is public); $env:HF_TOKEN is sent if set.
 Write-Host "== [3/5] fetching + verifying the model =="
 $lock = @{}
 Get-Content (Join-Path $repo "model.lock") | Where-Object { $_ -match '^\s*([a-z_0-9]+)=(.*)$' } |

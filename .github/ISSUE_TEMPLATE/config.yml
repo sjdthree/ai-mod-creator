@@ -1,8 +1,11 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: Specifications (engineering contract)
-    url: https://github.com/sjdthree/ai-mod-creator/tree/main/AI_Mod_Creator_Engineering_Package_v1.0
-    about: Read the six SPEC documents before filing. They are the stable contract.
-  - name: Living engineering backlog
-    url: https://github.com/sjdthree/ai-mod-creator/tree/main/implementation
-    about: Phase work items derived from the specs.
+  - name: Install help
+    url: https://github.com/sjdthree/ai-mod-creator/blob/main/docs/INSTALL.md
+    about: First-launch warnings, Java 21, and other setup questions.
+  - name: User guide
+    url: https://github.com/sjdthree/ai-mod-creator/blob/main/docs/USER_GUIDE.md
+    about: What you can make and how to phrase requests.
+  - name: Report a security problem
+    url: https://github.com/sjdthree/ai-mod-creator/security/policy
+    about: Please report vulnerabilities privately, not as an issue.

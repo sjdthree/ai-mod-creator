@@ -1,20 +1,19 @@
 ## Summary
 
-<!-- What changed and why. Link the work item: impl:phaseN/NNNN -->
+<!-- What changed and why. Link the issue it fixes, e.g. "Fixes #12". -->
 
-Work item: `impl:phase_/____`
+## Traceability (maintainers; optional for outside contributors)
 
-## Traceability
-
+- Work item: <!-- impl:phaseN/NNNN -->
 - Product requirement(s): <!-- FR-00x / NFR-00x -->
 - MCL element(s): <!-- doc type / operation / schema section -->
 - Component(s) / crate(s):
 - Benchmark case(s): <!-- COMP-* / FT-* / INT-* / E2E-* -->
 
-## Definition of Done (SPEC-006)
+## Checklist
 
 - [ ] Implementation complete
-- [ ] Unit tests pass (`cargo test --workspace`)
+- [ ] `./scripts/ci.sh` passes (fmt, clippy, tests)
 - [ ] Integration tests pass (if applicable this phase)
 - [ ] Required benchmark cases pass
 - [ ] Docs updated if interfaces changed (specs untouched; backlog/ADR/traceability updated)

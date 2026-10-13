@@ -26,6 +26,8 @@ same mod.
 
 ## Get started
 
+- **Download:** the [latest release](https://github.com/sjdthree/ai-mod-creator/releases/latest)
+  (macOS Apple Silicon `.dmg`, Windows `-setup.exe` / `.msi`).
 - **Install the app:** [docs/INSTALL.md](docs/INSTALL.md) (macOS Apple Silicon, Windows).
   The installers are unsigned during the alpha, so the first launch needs one extra click.
 - **Build from source / use the CLI:** [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
@@ -53,7 +55,8 @@ The project was developed in a private repository; public history starts at this
 ./scripts/ci.sh        # fmt, clippy, tests, license check: the same as CI
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and our
+[Code of Conduct](CODE_OF_CONDUCT.md). Report security problems privately: [SECURITY.md](SECURITY.md).
 
 ## License
 

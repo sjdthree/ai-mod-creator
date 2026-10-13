@@ -18,7 +18,7 @@ The app builds real Minecraft mods, which needs a Java 21 development kit.
 ## 2. macOS (Apple Silicon)
 
 1. **Download** the `AI-mod-creator_<version>_macOS-AppleSilicon.dmg` from the
-   [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases).
+   [**latest release**](https://github.com/sjdthree/ai-mod-creator/releases/latest).
 2. **Open the `.dmg`** and **drag *AI-mod creator* into the *Applications* folder.**
 3. **First launch** (the app isn't code-signed yet, so macOS asks the first time):
    - **Right-click** the app in Applications → **Open** → **Open** in the dialog.
@@ -33,11 +33,7 @@ Requires an Apple-Silicon Mac (M1 or newer) and macOS 12+.
 ## 3. Windows 11
 
 1. **Download** the `…_x64-setup.exe` installer (recommended) — or the `.msi` — from the
-   [**Releases page**](https://github.com/sjdthree/ai-mod-creator/releases).
-   *(No Windows build published yet? It’s produced from source on a Windows box with
-   [`apps/desktop/scripts/build_windows.ps1`](../apps/desktop/scripts/build_windows.ps1), then uploaded to
-   the Releases page with
-   [`apps/desktop/scripts/publish_windows_release.ps1`](../apps/desktop/scripts/publish_windows_release.ps1).)*
+   [**latest release**](https://github.com/sjdthree/ai-mod-creator/releases/latest).
 2. **Run the installer.**
    - The `-setup.exe` installs **per-user — no admin needed**; the `.msi` is for machine-wide/managed installs.
    - **It isn’t code-signed yet**, so Windows **SmartScreen** shows *“Windows protected your PC / unknown

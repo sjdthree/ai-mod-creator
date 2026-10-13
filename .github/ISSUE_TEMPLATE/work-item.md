@@ -1,6 +1,6 @@
 ---
 name: Work item
-about: A backlog work item (≤ one engineer-week)
+about: "Maintainers: a backlog work item (≤ one engineer-week). Players: use Bug report or Idea."
 title: "[phaseN/NNNN] <title>"
 labels: ["work-item"]
 ---
