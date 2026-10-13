@@ -1,0 +1,16 @@
+[package]
+name = "amc-validator"
+description = "Operation Validator: staged validation of proposed operations (SPEC-003 §7, SPEC-004 §33)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+amc-core.workspace = true
+amc-schema.workspace = true
+amc-state.workspace = true
+amc-generator.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true

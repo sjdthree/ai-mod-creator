@@ -1,0 +1,14 @@
+[package]
+name = "amc-state"
+description = "Project State Manager: canonical state, transactions, rollback (SPEC-003 §8)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+amc-core.workspace = true
+amc-schema.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true

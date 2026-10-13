@@ -42,7 +42,7 @@ apps/desktop/    Tauri desktop app (the friendly front end)
 crates/          Rust engine: intent bridge, validator, state, generator, build, verify, CLI
 schemas/         MCL (the operation language) JSON Schemas
 docs/            Guides, ADRs, design notes
-Minecraft_Creation_Engine_Engineering_Package_v1.0/   The original design specs
+AI_Mod_Creator_Engineering_Package_v1.0/   The original design specs
 ```
 
 The project was developed in a private repository; public history starts at this alpha.

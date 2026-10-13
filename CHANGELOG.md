@@ -12,11 +12,11 @@ The first public release. Earlier development happened in a private repository.
 
 - **Desktop app** (Tauri) for macOS (Apple Silicon) and Windows: type a request, watch it build and
   verify, then play or export the mod.
-- **`mce` CLI:** `init`, `request`, `list`, `test`, `play`, `export`, `undo`, `revert`, `validate`, `model`, `bench`.
+- **`amc` CLI:** `init`, `request`, `list`, `test`, `play`, `export`, `undo`, `revert`, `validate`, `model`, `bench`.
 - **Supported content:** items, weapons, tools, food, blocks and crafting recipes, created, refined,
   renamed and deleted through plain-English requests.
 - **Minecraft 1.21.1 / NeoForge**, with runtime verification through GameTests. Fabric support is
   in progress.
 - **Model:** [`ai-mod-create-270smol`](https://huggingface.co/sjdthree/ai-mod-create-270smol) v1.0.0,
   pinned by `model.lock` and checked against the engine's contract and grammar by
-  `mce model verify`.
+  `amc model verify`.

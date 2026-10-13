@@ -27,10 +27,10 @@ $resModels = Join-Path $tauri "resources\models"
 $resLic    = Join-Path $tauri "resources\licenses"
 New-Item -ItemType Directory -Force -Path $binaries,$resModels,$resLic | Out-Null
 
-# 1) engine — mce.exe
-Write-Host "== [1/5] building mce.exe =="
-cargo build --release -p mce-cli --manifest-path (Join-Path $repo "Cargo.toml")
-Copy-Item (Join-Path $repo "target\release\mce.exe") (Join-Path $binaries "mce-$triple.exe") -Force
+# 1) engine — amc.exe
+Write-Host "== [1/5] building amc.exe =="
+cargo build --release -p amc-cli --manifest-path (Join-Path $repo "Cargo.toml")
+Copy-Item (Join-Path $repo "target\release\amc.exe") (Join-Path $binaries "amc-$triple.exe") -Force
 
 # 2) model runtime — a STATIC llama-server.exe (single self-contained exe, static CRT)
 Write-Host "== [2/5] building static llama-server.exe =="
@@ -46,7 +46,7 @@ Pop-Location
 $llamaExe = Get-ChildItem -Path (Join-Path $llamaSrc "build") -Recurse -Filter "llama-server.exe" | Select-Object -First 1
 Copy-Item $llamaExe.FullName (Join-Path $binaries "llama-server-$triple.exe") -Force
 
-# 3) the model pinned in model.lock, from Hugging Face — mce-model.json (sha256-pinned by model.lock) +
+# 3) the model pinned in model.lock, from Hugging Face — amc-model.json (sha256-pinned by model.lock) +
 #    the GGUF it names, then verified against this engine (contract/grammar pins + weights sha256).
 #    While the Hugging Face repo is private, set $env:HF_TOKEN.
 Write-Host "== [3/5] fetching + verifying the model =="
@@ -54,34 +54,34 @@ $lock = @{}
 Get-Content (Join-Path $repo "model.lock") | Where-Object { $_ -match '^\s*([a-z_0-9]+)=(.*)$' } |
   ForEach-Object { $lock[$Matches[1]] = $Matches[2].Trim() }
 $name = $lock["name"]
-$modelDir = if ($env:MCE_MODEL_DIR) { $env:MCE_MODEL_DIR } else { Join-Path $repo "models\$name" }
-$mce = Join-Path $repo "target\release\mce.exe"
-if (-not $env:MCE_MODEL_DIR) {
+$modelDir = if ($env:AMC_MODEL_DIR) { $env:AMC_MODEL_DIR } else { Join-Path $repo "models\$name" }
+$amc = Join-Path $repo "target\release\amc.exe"
+if (-not $env:AMC_MODEL_DIR) {
   New-Item -ItemType Directory -Force -Path $modelDir | Out-Null
   $base = "https://huggingface.co/$($lock['repo'])/resolve/$($lock['revision'])"
   $headers = @{}
   if ($env:HF_TOKEN) { $headers["Authorization"] = "Bearer $($env:HF_TOKEN)" }
-  $manifestPath = Join-Path $modelDir "mce-model.json"
-  Invoke-WebRequest -Uri "$base/mce-model.json" -OutFile $manifestPath -Headers $headers
+  $manifestPath = Join-Path $modelDir "amc-model.json"
+  Invoke-WebRequest -Uri "$base/$($lock['manifest_file'])" -OutFile $manifestPath -Headers $headers
   $got = (Get-FileHash $manifestPath -Algorithm SHA256).Hash.ToLower()
-  if ($got -ne $lock["manifest_sha256"]) { throw "mce-model.json sha256 $got does not match model.lock" }
+  if ($got -ne $lock["manifest_sha256"]) { throw "amc-model.json sha256 $got does not match model.lock" }
   $m = Get-Content $manifestPath -Raw | ConvertFrom-Json
   $ggufPath = Join-Path $modelDir $m.gguf
   if (-not ((Test-Path $ggufPath) -and ((Get-FileHash $ggufPath -Algorithm SHA256).Hash.ToLower() -eq $m.gguf_sha256))) {
     Invoke-WebRequest -Uri "$base/$($m.gguf)" -OutFile $ggufPath -Headers $headers
   }
 }
-& $mce model verify $modelDir
+& $amc model verify $modelDir
 if ($LASTEXITCODE -ne 0) { throw "the model is not compatible with this engine" }
 $staged = Join-Path $resModels $name
 New-Item -ItemType Directory -Force -Path $staged | Out-Null
-$manifest = Get-Content (Join-Path $modelDir "mce-model.json") -Raw | ConvertFrom-Json
-Copy-Item (Join-Path $modelDir "mce-model.json") $staged -Force
+$manifest = Get-Content (Join-Path $modelDir "amc-model.json") -Raw | ConvertFrom-Json
+Copy-Item (Join-Path $modelDir "amc-model.json") $staged -Force
 Copy-Item (Join-Path $modelDir $manifest.gguf) $staged -Force
 
 # 4) grammar (engine-owned) + license notices
 Write-Host "== [4/5] staging grammar + license notices =="
-Copy-Item (Join-Path $repo "crates\mce-intent\contract\mce-ops.gbnf") (Join-Path $tauri "resources\mce-ops.gbnf") -Force
+Copy-Item (Join-Path $repo "crates\amc-intent\contract\amc-ops.gbnf") (Join-Path $tauri "resources\amc-ops.gbnf") -Force
 Copy-Item (Join-Path $repo "LICENSE"),(Join-Path $repo "NOTICE") $resLic -Force
 Copy-Item (Join-Path $repo "apps\desktop\licenses\*") $resLic -Force
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/schemas/0.1.0/operation.schema.json",
+  "$id": "https://amc.dev/schemas/0.1.0/operation.schema.json",
   "title": "MCL Operation",
   "description": "An operation emitted by the Intent Adapter (SPEC-004 §19). The core assigns the canonical operation_id; the model may propose one.",
   "type": "object",

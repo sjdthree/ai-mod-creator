@@ -4,21 +4,21 @@
 *                       @sjdthree
 
 # core-engine
-/crates/mce-core/       @sjdthree
-/crates/mce-schema/     @sjdthree
-/crates/mce-state/      @sjdthree
-/crates/mce-validator/  @sjdthree
-/crates/mce-generator/  @sjdthree
-/crates/mce-cli/        @sjdthree
+/crates/amc-core/       @sjdthree
+/crates/amc-schema/     @sjdthree
+/crates/amc-state/      @sjdthree
+/crates/amc-validator/  @sjdthree
+/crates/amc-generator/  @sjdthree
+/crates/amc-cli/        @sjdthree
 
 # mc-integration
-/crates/mce-build/      @sjdthree
-/crates/mce-verify/     @sjdthree
-/crates/mce-launch/     @sjdthree
+/crates/amc-build/      @sjdthree
+/crates/amc-verify/     @sjdthree
+/crates/amc-launch/     @sjdthree
 
 # ai-ml
-/crates/mce-intent/     @sjdthree
+/crates/amc-intent/     @sjdthree
 
 # qa
-/crates/mce-bench/      @sjdthree
+/crates/amc-bench/      @sjdthree
 /benchmarks/            @sjdthree

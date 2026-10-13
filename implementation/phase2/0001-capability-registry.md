@@ -17,8 +17,8 @@ implement, consumed by the validator (`SPEC-004 §39`).
 
 ## Implementation Notes
 
-Implemented as `mce-generator::capability` (`is_concept_supported`, `subtypes`,
-`recipe_types`, `is_recipe_type_supported`). The validator (`mce-validator`) enforces it.
+Implemented as `amc-generator::capability` (`is_concept_supported`, `subtypes`,
+`recipe_types`, `is_recipe_type_supported`). The validator (`amc-validator`) enforces it.
 
 ## Acceptance Tests
 
@@ -28,4 +28,4 @@ Implemented as `mce-generator::capability` (`is_concept_supported`, `subtypes`,
 
 - Product requirement(s): `FR-004`.
 - MCL element(s): capability registry (`SPEC-004 §39`).
-- Component(s): `mce-generator`.
+- Component(s): `amc-generator`.

@@ -25,4 +25,4 @@ BUILD_ENVIRONMENT | MINECRAFT_ADAPTER | GAMETEST | CLIENT_LAUNCH | BENCHMARK_HAR
 
 ## False-success? (SPEC-005 §18)
 
-- [ ] This bug caused MCE to report success for unverified behavior (release-blocking)
+- [ ] This bug caused AMC to report success for unverified behavior (release-blocking)

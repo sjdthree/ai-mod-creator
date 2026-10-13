@@ -23,7 +23,7 @@ ADR-0004. `SPEC-005 §12`, §15. This is the crux of the 0%-false-success guaran
 
 ## Tasks
 
-1. Generate the Ruby Blade project (done — `mce-generator`), add the Gradle wrapper, and run
+1. Generate the Ruby Blade project (done — `amc-generator`), add the Gradle wrapper, and run
    `./gradlew build` to confirm it compiles against NeoForge 21.1.x.
 2. Register a trivial GameTest and run it on a dedicated server; confirm discovery works in
    production (community reports say it may not — have an RCON-driven server-assertion mod as a
@@ -43,4 +43,4 @@ Record findings in a follow-up ADR that supersedes ADR-0004 and fixes the harnes
 ## Traceability
 
 - Product requirement(s): `FR-005`, acceptance `SPEC-001 §8`.
-- Component(s): `mce-build`, `mce-verify`, `mce-launch`.
+- Component(s): `amc-build`, `amc-verify`, `amc-launch`.

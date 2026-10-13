@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/schemas/0.1.0/behavior.schema.json",
+  "$id": "https://amc.dev/schemas/0.1.0/behavior.schema.json",
   "title": "MCL Behavior Document",
   "description": "Restricted trigger-condition-action behavior (SPEC-004 §18). No arbitrary code.",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mce.dev/schemas/0.1.0/transaction.schema.json",
+  "$id": "https://amc.dev/schemas/0.1.0/transaction.schema.json",
   "title": "MCL Transaction Document",
   "description": "A candidate/committed transaction (SPEC-004 §31). Only verified transactions become canonical.",
   "type": "object",

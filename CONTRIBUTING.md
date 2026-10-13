@@ -1,12 +1,12 @@
-# Contributing to MCE
+# Contributing to AMC
 
-MCE is developed **solo + Claude Code**, but with team-grade discipline because the product's
+AMC is developed **solo + Claude Code**, but with team-grade discipline because the product's
 core promise is **0% false-success** (`SPEC-005 §18`). These rules keep work auditable and
 traceable.
 
 ## The specs are the contract
 
-The six documents in `Minecraft_Creation_Engine_Engineering_Package_v1.0/` are the stable
+The six documents in `AI_Mod_Creator_Engineering_Package_v1.0/` are the stable
 engineering contract. Don't edit them to reflect implementation drift — instead update the
 **living backlog** (`implementation/`) and, for decisions, add an **ADR** (`docs/adr/`).
 
@@ -60,7 +60,7 @@ Equivalent individual commands:
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-cargo run -p mce-cli -- bench benchmarks/ --json
+cargo run -p amc-cli -- bench benchmarks/ --json
 ```
 
 ## Toolchain

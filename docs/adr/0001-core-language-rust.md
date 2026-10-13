@@ -5,16 +5,16 @@
 
 ## Context
 
-MCE must convert English into a **verified**, **deterministic**, **reproducible** Minecraft mod
+AMC must convert English into a **verified**, **deterministic**, **reproducible** Minecraft mod
 on a consumer desktop, offline after install (`SPEC-001` NFR-001, NFR-004; `SPEC-004` MCL-004).
 The core carries a strongly-typed state/schema contract where correctness and determinism
 dominate. `SPEC-006` Phase 0 already specifies a Rust workspace.
 
 ## Decision
 
-Implement the core engine as a **Cargo workspace (Rust, edition 2021)**: `mce-cli`,
-`mce-core`, `mce-schema`, `mce-state`, `mce-validator`, `mce-generator`, `mce-build`,
-`mce-verify`, `mce-launch`, `mce-intent`, `mce-bench`.
+Implement the core engine as a **Cargo workspace (Rust, edition 2021)**: `amc-cli`,
+`amc-core`, `amc-schema`, `amc-state`, `amc-validator`, `amc-generator`, `amc-build`,
+`amc-verify`, `amc-launch`, `amc-intent`, `amc-bench`.
 
 ## Consequences
 

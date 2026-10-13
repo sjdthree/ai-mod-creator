@@ -11,12 +11,12 @@ changing generator code** and **every model can be tested independently** (`SPEC
 ## Decision
 
 Model training lives outside this repository. The engine consumes only a **released model** —
-a GGUF plus an `mce-model.json` manifest, published on Hugging Face and pinned by `model.lock` —
+a GGUF plus an `amc-model.json` manifest, published on Hugging Face and pinned by `model.lock` —
 over a narrow runtime interface (any OpenAI-compatible chat endpoint; the desktop app runs
 `llama-server`). The contract between them is the MCL **operation** schema (`SPEC-004 §19`), the
-system prompt (`crates/mce-intent/contract/contract.txt`) and the decoding grammar
-(`crates/mce-intent/contract/mce-ops.gbnf`). The manifest pins the sha256 of both, and
-`mce model verify` refuses a model built against different bytes.
+system prompt (`crates/amc-intent/contract/contract.txt`) and the decoding grammar
+(`crates/amc-intent/contract/amc-ops.gbnf`). The manifest pins the sha256 of both, and
+`amc model verify` refuses a model built against different bytes.
 
 ## Consequences
 
