@@ -78,7 +78,8 @@ amc undo --project myworld                                                      
 
 1. `amc export --project myworld` — copies the `.jar` into your Minecraft `mods` folder
    (macOS `~/Library/Application Support/minecraft/mods`, or `--to <folder>` for a modpack/instance).
-2. Launch Minecraft **1.21.1 with NeoForge** from your usual launcher. Your items are in the game.
+2. Launch Minecraft **1.21.1 with NeoForge** from your usual launcher (or with **Fabric Loader + Fabric
+   API** if you built with `--loader fabric`). Your items are in the game.
 
 ---
 

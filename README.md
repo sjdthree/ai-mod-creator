@@ -5,7 +5,7 @@ your laptop, offline, with a tiny open model.
 
 ```text
 "a ruby sword called Ruby Blade with 1200 durability and 9 damage"
-   → a real NeoForge mod, built, checked inside Minecraft, and ready to play
+   → a real Fabric mod, built, checked inside Minecraft, and ready to play
 ```
 
 **Status: early alpha.** It handles simple items, weapons, tools, food, blocks and recipes, and
@@ -35,7 +35,8 @@ same mod.
 
 You need Java 21 to build mods, and Minecraft Java Edition to play them in your own game.
 
-Targets Minecraft **1.21.1** with **NeoForge** (Fabric support is in progress).
+Targets Minecraft **1.21.1**. The desktop app builds **Fabric** mods (Fabric Loader + Fabric API);
+the `amc` CLI builds **NeoForge** mods by default (`--loader fabric` for Fabric).
 
 ## Repository layout
 

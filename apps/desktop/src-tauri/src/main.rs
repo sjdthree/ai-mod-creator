@@ -931,8 +931,8 @@ fn launch_minecraft() -> Result<Value, String> {
     }
 }
 
-/// The mod loader this app session targets, mirroring the CLI's `$AMC_LOADER` resolution (defaults
-/// to NeoForge). Surfaced to the UI so a user can see at a glance whether they're building a
+/// The mod loader this app session targets (see [`active_loader`]: Fabric unless
+/// `$AMC_LOADER=neoforge`). Surfaced to the UI so a user can see at a glance whether they're building a
 /// **Fabric** or **NeoForge** mod — otherwise leftover jars from the other loader are indistinguishable.
 #[tauri::command]
 fn loader_info() -> Value {
