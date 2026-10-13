@@ -247,7 +247,7 @@ fn model_server_cmd() -> (String, Vec<String>) {
     if let Ok(c) = std::env::var("AMC_MODEL_CMD") {
         return (c, vec![]);
     }
-    // radioconda/miniconda install location we know works on this machine.
+    // A radioconda install puts mlx_lm.server here.
     if let Ok(home) = std::env::var("HOME") {
         let cand = PathBuf::from(&home).join("radioconda/bin/mlx_lm.server");
         if cand.exists() {
