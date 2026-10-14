@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.3.0-alpha.4] — 2026-10-14
+
 - **Fix: re-making something you already have showed the wrong name and then lost its card.**
   Asking for a creation that already exists (say, tapping the pumpkin tart example twice) updates
   the existing one, but the engine's reply only identified it by an internal id. The app fell back to
@@ -13,8 +15,6 @@ All notable changes to this project are documented here. The format is based on
   your project" at the next refresh (such as pressing Quick Test). `amc request --json` now includes
   the creation it created, changed or deleted as `item`, and the app only tracks names that are in
   the sidebar.
-## [0.3.0-alpha.4] — 2026-10-14
-
 - **Quick Test and builds retry a failed download.** The first Quick Test (and the first build)
   downloads Minecraft and the loader, and one dropped connection used to fail the whole thing. Now a
   failure caused by a network hiccup (a timeout, a reset connection, a mirror's 5xx) is tried again,
