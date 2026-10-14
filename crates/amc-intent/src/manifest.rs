@@ -59,7 +59,7 @@ pub const MANIFEST_FORMAT: u32 = 1;
 
 /// Hex sha256 of `bytes`.
 pub fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    amc_core::sha256_hex(bytes)
 }
 
 /// Hex sha256 of the CONTRACT embedded in this engine.
@@ -74,10 +74,18 @@ pub fn grammar_sha256() -> String {
 
 /// Streaming sha256 of a (possibly large) file.
 pub fn file_sha256(path: &Path) -> std::io::Result<String> {
+    use std::io::Read;
     let mut file = std::fs::File::open(path)?;
     let mut hasher = Sha256::new();
-    std::io::copy(&mut file, &mut hasher)?;
-    Ok(format!("{:x}", hasher.finalize()))
+    let mut buf = vec![0u8; 1 << 16];
+    loop {
+        let n = file.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        hasher.update(&buf[..n]);
+    }
+    Ok(amc_core::to_hex(&hasher.finalize()))
 }
 
 /// `amc-model.json`: identity, provenance, and compatibility pins for one promoted model build.

@@ -106,7 +106,6 @@ pub fn ensure_wrapper(project_root: &Path) -> Result<()> {
 /// Locate the built mod JAR under `build/libs/` and return `(path, sha256)`. NeoForge's ModDevGradle
 /// writes the packaged mod there; we ignore `-sources`/`-javadoc` siblings.
 pub fn discover_jar(project_root: &Path) -> Option<(String, String)> {
-    use sha2::{Digest, Sha256};
     let libs = project_root.join("build").join("libs");
     let mut jars: Vec<std::path::PathBuf> = std::fs::read_dir(&libs)
         .ok()?
@@ -122,7 +121,7 @@ pub fn discover_jar(project_root: &Path) -> Option<(String, String)> {
     jars.sort();
     let jar = jars.into_iter().next()?;
     let bytes = std::fs::read(&jar).ok()?;
-    let checksum = format!("sha256:{:x}", Sha256::digest(&bytes));
+    let checksum = format!("sha256:{}", amc_core::sha256_hex(&bytes));
     Some((jar.display().to_string(), checksum))
 }
 

@@ -9,4 +9,3 @@ repository.workspace = true
 
 [dependencies]
 amc-core.workspace = true
-sha2.workspace = true
