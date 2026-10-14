@@ -259,8 +259,32 @@ mod tests {
         let addr = listener.local_addr().unwrap();
         std::thread::spawn(move || {
             let (mut conn, _) = listener.accept().unwrap();
+            // Drain the whole request (headers + Content-Length body) before replying. A single
+            // `read` can return just the headers; closing with the body still unread makes Windows
+            // reset the connection (os error 10054) and the client never sees the reply.
+            let mut req = Vec::new();
             let mut buf = [0u8; 8192];
-            let _ = conn.read(&mut buf);
+            loop {
+                let n = conn.read(&mut buf).unwrap_or(0);
+                if n == 0 {
+                    break;
+                }
+                req.extend_from_slice(&buf[..n]);
+                let text = String::from_utf8_lossy(&req);
+                if let Some(end) = text.find("\r\n\r\n") {
+                    let len = text[..end]
+                        .lines()
+                        .find_map(|l| {
+                            let (k, v) = l.split_once(':')?;
+                            k.eq_ignore_ascii_case("content-length")
+                                .then(|| v.trim().parse::<usize>().ok())?
+                        })
+                        .unwrap_or(0);
+                    if req.len() >= end + 4 + len {
+                        break;
+                    }
+                }
+            }
             let reply = format!(
                 "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
                 body.len()
