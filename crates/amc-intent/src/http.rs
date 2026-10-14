@@ -171,23 +171,25 @@ impl IntentAdapter for HttpIntentAdapter {
         };
         let body = self.request_body(effective_request, context);
         let resp = ureq::post(&self.endpoint)
-            .timeout(std::time::Duration::from_secs(self.timeout_secs))
-            .set("Content-Type", "application/json")
-            .send_string(&body.to_string());
+            .config()
+            .timeout_global(Some(std::time::Duration::from_secs(self.timeout_secs)))
+            .http_status_as_error(false)
+            .build()
+            .header("Content-Type", "application/json")
+            .send(body.to_string());
 
-        let text = match resp {
-            Ok(r) => r
-                .into_string()
-                .map_err(|e| err(format!("reading model response body: {e}")))?,
-            Err(ureq::Error::Status(code, r)) => {
-                let detail = r.into_string().unwrap_or_default();
-                return Err(err(format!(
-                    "model endpoint returned HTTP {code}: {}",
-                    detail.trim()
-                )));
-            }
-            Err(e) => return Err(err(format!("model endpoint unreachable: {e}"))),
-        };
+        let mut resp = resp.map_err(|e| err(format!("model endpoint unreachable: {e}")))?;
+        let status = resp.status();
+        let text = resp.body_mut().read_to_string();
+        if !status.is_success() {
+            let detail = text.unwrap_or_default();
+            return Err(err(format!(
+                "model endpoint returned HTTP {}: {}",
+                status.as_u16(),
+                detail.trim()
+            )));
+        }
+        let text = text.map_err(|e| err(format!("reading model response body: {e}")))?;
 
         let content = parse_content(&text)?;
         // We only reach the model for requests the deterministic fast-path declined (fuzzy / update /
@@ -248,6 +250,60 @@ mod tests {
         assert_eq!(parse_content(&resp).unwrap(), "[]");
         assert!(parse_content("not json").is_err());
         assert!(parse_content(&json!({"choices": []}).to_string()).is_err());
+    }
+
+    /// Serve one canned HTTP response on a local port and return the chat-completions URL.
+    fn one_shot_server(status: &'static str, body: String) -> String {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::spawn(move || {
+            let (mut conn, _) = listener.accept().unwrap();
+            let mut buf = [0u8; 8192];
+            let _ = conn.read(&mut buf);
+            let reply = format!(
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
+            let _ = conn.write_all(reply.as_bytes());
+        });
+        format!("http://{addr}/v1/chat/completions")
+    }
+
+    /// A fuzzy refine the deterministic parser declines, so it must go to the model endpoint.
+    fn model_bound_call(endpoint: &str) -> Result<IntentResult> {
+        let a = HttpIntentAdapter::new(endpoint, "m", "v").with_timeout_secs(5);
+        a.interpret(
+            "make it glow and look fancy",
+            &json!({"concepts": ["Sting"], "refine_target": "Sting"}),
+        )
+    }
+
+    #[test]
+    fn interpret_reads_a_successful_response() {
+        let ops = r#"[{"operation":"delete_concept","payload":{"target":"Sting"}}]"#;
+        let body = json!({"choices": [{"message": {"content": ops}}]}).to_string();
+        let result = model_bound_call(&one_shot_server("200 OK", body)).expect("model call");
+        assert_eq!(
+            result.operations[0]["operation"], "delete_concept",
+            "{result:?}"
+        );
+    }
+
+    #[test]
+    fn interpret_reports_http_errors_with_status_and_body() {
+        let endpoint = one_shot_server("404 Not Found", r#"{"error":"no such route"}"#.into());
+        let e = model_bound_call(&endpoint).unwrap_err().to_string();
+        assert!(e.contains("HTTP 404"), "{e}");
+        assert!(e.contains("no such route"), "{e}");
+    }
+
+    #[test]
+    fn interpret_reports_an_unreachable_endpoint() {
+        let e = model_bound_call("http://127.0.0.1:1/v1/chat/completions")
+            .unwrap_err()
+            .to_string();
+        assert!(e.contains("unreachable"), "{e}");
     }
 
     #[test]

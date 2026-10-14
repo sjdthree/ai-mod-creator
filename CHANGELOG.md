@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+- **Dependencies updated** to their current major versions: ureq 3, jsonschema 0.58, sha2 0.11 and
+  thiserror 2 in the engine, plus the pending minor/patch updates for the engine and the desktop app
+  and `actions/checkout` v7 in CI. jsonschema no longer pulls in an HTTP client, since the engine only
+  validates its own bundled schemas.
 - **Fix: the installers didn't include the Rust crate license notices** that NOTICE promised. The
   bundle scripts now generate `THIRD_PARTY_LICENSES.html` (desktop app) and
   `THIRD_PARTY_LICENSES-engine.html` (engine) with cargo-about, so packaging needs

@@ -20,8 +20,23 @@ pub fn canonical_hash(value: &Value) -> String {
     // With `preserve_order` disabled, serde_json serializes object keys in sorted order, giving a
     // stable byte string for a given logical value.
     let bytes = serde_json::to_vec(&canonical).expect("Value re-serialization cannot fail");
-    let digest = Sha256::digest(&bytes);
-    format!("sha256:{digest:x}")
+    format!("sha256:{}", sha256_hex(&bytes))
+}
+
+/// Lowercase hex sha256 of `bytes`.
+pub fn sha256_hex(bytes: &[u8]) -> String {
+    to_hex(&Sha256::digest(bytes))
+}
+
+/// Lowercase hex of `bytes` (sha2 0.11 digests no longer format with `{:x}`).
+pub fn to_hex(bytes: &[u8]) -> String {
+    use std::fmt::Write;
+    bytes
+        .iter()
+        .fold(String::with_capacity(bytes.len() * 2), |mut s, b| {
+            let _ = write!(s, "{b:02x}");
+            s
+        })
 }
 
 /// Return a copy of `value` with variable metadata keys removed recursively.

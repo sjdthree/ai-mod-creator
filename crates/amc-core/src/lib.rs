@@ -15,7 +15,7 @@ pub mod log;
 pub mod proc;
 
 pub use error::{AmcError, Component, Result};
-pub use hash::canonical_hash;
+pub use hash::{canonical_hash, sha256_hex, to_hex};
 pub use id::new_id;
 pub use log::init_logging;
 pub use proc::{gradle_wrapper, hide_console, output_with_timeout};

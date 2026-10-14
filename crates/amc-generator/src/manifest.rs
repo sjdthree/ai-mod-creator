@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 
 use serde::Serialize;
 use serde_json::json;
-use sha2::{Digest, Sha256};
 
 /// One generated file and the hash of its bytes.
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -26,7 +25,7 @@ pub struct GenerationManifest {
 
 /// Hash of a single file's bytes as `sha256:...`.
 pub fn file_hash(bytes: &[u8]) -> String {
-    format!("sha256:{:x}", Sha256::digest(bytes))
+    format!("sha256:{}", amc_core::sha256_hex(bytes))
 }
 
 impl GenerationManifest {
