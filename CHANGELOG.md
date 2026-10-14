@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.3.0-alpha.4] — 2026-10-14
+
 - **Quick Test and builds retry a failed download.** The first Quick Test (and the first build)
   downloads Minecraft and the loader, and one dropped connection used to fail the whole thing. Now a
   failure caused by a network hiccup (a timeout, a reset connection, a mirror's 5xx) is tried again,
