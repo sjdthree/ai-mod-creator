@@ -424,11 +424,20 @@ function stageLabel(k, name){
     verify:   `Load ${N} into Minecraft and test it`,
   })[k];
 }
+// When the current create started (null when none is running). The engine doesn't stream progress, so
+// a live elapsed time on the active step is what shows a ~1–2 minute build is still going.
+let pipeT0 = null;
+function workingLabel(){
+  if (pipeT0 === null) return "working…";
+  const s = Math.round((Date.now() - pipeT0) / 1000);
+  const clock = `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+  return s < 20 ? `working… ${clock}` : `working… ${clock} · usually 1–2 min, longer the first time`;
+}
 function renderPipe(states, name){
   $("#pipe").innerHTML = STAGES.map(([k])=>{
     const s = states[k] || "idle";
     const mark = s==="done"?"✓": s==="fail"?"✕": "";
-    return `<div class="step" data-s="${s}"><span class="dot">${mark}</span><span class="lbl">${esc(stageLabel(k,name))}</span><span class="sub">${s==="active"?"working…":""}</span></div>`;
+    return `<div class="step" data-s="${s}"><span class="dot">${mark}</span><span class="lbl">${esc(stageLabel(k,name))}</span><span class="sub">${s==="active"?workingLabel():""}</span></div>`;
   }).join("");
 }
 const NEW_PROJECT = "__new__";
@@ -632,8 +641,12 @@ async function handleResult(states, res, prov){
         `${errLine} It's already in your creations on the left — pick a different name to make another, or refine the existing one.`]
       : ["That wouldn't be valid Minecraft",
         `${errLine} Adjust it and try again.`],
-    build_failed: [`“${prov.name}” didn't compile`,
-      "The generated mod failed to build — this is on us, not you. Tap Try again; if it keeps happening, the details below help us fix it."],
+    // The engine already retried a failed download a few times before giving up, so say it's the network.
+    build_failed: /download problem persisted/.test(res.log_tail || "")
+      ? ["Couldn't download what the build needs",
+        `The build downloads Minecraft and ${window.AMC_LOADER_LABEL} files, and that kept failing — usually a flaky connection. Check your internet, then tap Try again.`]
+      : [`“${prov.name}” didn't compile`,
+        "The generated mod failed to build — this is on us, not you. Tap Try again; if it keeps happening, the details below help us fix it."],
     verification_failed: [`“${prov.name}” didn't pass its in-game test`,
       `It built, but the automatic in-game check didn't confirm it — so nothing was saved and your last version is untouched. The AI model sometimes has an off run; Try again usually fixes it.`],
   };
@@ -750,8 +763,13 @@ async function doCreate(){
   $("#run").hidden = false; $("#result").hidden = true; current.shownItem = null;
   setRunHead(kindOf(prov.type), seedOf(prov.name),
     current.refine ? `Refining ${prov.name}` : `Creating ${prov.name}`, `“${text}”`);
+  pipeT0 = Date.now();
   const states = {}; renderPipe(states, prov.name);
   $("#run").scrollIntoView({behavior:"smooth", block:"nearest"});
+  const clock = setInterval(()=>{
+    const sub = document.querySelector('#pipe .step[data-s="active"] .sub');
+    if (sub) sub.textContent = workingLabel();
+  }, 1000);
   // Real builds take ~1 min with no streaming, so animate the stages on a timer; the mock drives
   // onStage directly. Either way we "sit" on the last stage until the real result arrives.
   let idx = 0, timer = null;
@@ -783,6 +801,7 @@ async function doCreate(){
     $("#detailsbtn").hidden = false;
     toast(stuck ? "Build timed out — tap Try again." : "Create failed — tap Try again.", "bad", 8000);
   } finally {
+    clearInterval(clock); pipeT0 = null;
     current.busy = false; setCreateSurface(true);
   }
 }
@@ -814,9 +833,20 @@ async function doPlay(){
   }
   toast(heads, current.lastCreateOk === false ? "warn" : null, firstRun ? 12000 : 9000);
   playing = true;
-  const baseMsg = firstRun
+  let baseMsg = firstRun
     ? `first Quick Test: setting up the Minecraft 1.21.1 + ${window.AMC_LOADER_LABEL} sandbox (one-time download, a few minutes)`
     : `opening the sandbox Minecraft 1.21.1 + ${window.AMC_LOADER_LABEL}… (~30–60s)`;
+  // The engine retries a download that fails on a network hiccup; the backend tells us so we can say
+  // why it's taking longer instead of looking stuck.
+  let unlisten = null;
+  try {
+    if (inTauri && window.__TAURI__.event) unlisten = await window.__TAURI__.event.listen("play-progress", e => {
+      const m = e.payload && e.payload.message;
+      if (!m) return;
+      baseMsg = m;
+      toast(`Quick Test: ${m}.`, "warn", 8000);
+    });
+  } catch(e){ unlisten = null; }
   // A live elapsed-time ticker so a long first-run download visibly stays alive instead of looking hung.
   const t0 = Date.now();
   const fmt = s => s >= 60 ? `${Math.floor(s/60)}m ${s%60}s` : `${s}s`;
@@ -841,6 +871,7 @@ async function doPlay(){
     toast("The sandbox couldn't open:\n" + e, "bad", 12000);
   } finally {
     clearInterval(ticker);
+    if (unlisten) unlisten();
     playing = false;
     setTimeout(()=>{ $("#enginestat").textContent = inTauri ? "AI model ready" : "demo mode (no engine)"; }, 6000);
   }

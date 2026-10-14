@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+- **Quick Test and builds retry a failed download.** The first Quick Test (and the first build)
+  downloads Minecraft and the loader, and one dropped connection used to fail the whole thing. Now a
+  failure caused by a network hiccup (a timeout, a reset connection, a mirror's 5xx) is tried again,
+  up to 3 times in all, and the app says it's retrying. Real errors, like a compile error, aren't
+  retried. If the download keeps failing, the app says to check your internet connection instead of
+  blaming the mod.
+- **The build shows how long it's been running.** The active step now counts up ("working… 0:42")
+  and, after a few seconds, notes that a build usually takes a minute or two, so a normal build no
+  longer looks stuck.
 - **Fix: the installers didn't include the Rust crate license notices** that NOTICE promised. The
   bundle scripts now generate `THIRD_PARTY_LICENSES.html` (desktop app) and
   `THIRD_PARTY_LICENSES-engine.html` (engine) with cargo-about, so packaging needs
