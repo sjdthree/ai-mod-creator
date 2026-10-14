@@ -11,7 +11,10 @@
 use std::path::Path;
 use std::process::Command;
 
-use amc_core::{hide_console, AmcError, Component, Result};
+use amc_core::{
+    download_retry_delay, hide_console, is_transient_download_failure, AmcError, Component, Result,
+    DOWNLOAD_ATTEMPTS, DOWNLOAD_GAVE_UP_MARKER, DOWNLOAD_RETRY_MARKER,
+};
 
 /// A classified build result category (`SPEC-003 §10`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -197,25 +200,46 @@ impl BuildManager for GradleBuildManager {
         ensure_wrapper(project_root)?;
 
         let (program, args) = build_command(project_root);
-        let mut command = Command::new(&program);
-        command.args(&args).current_dir(project_root);
-        hide_console(&mut command);
-        // Hard 5-minute cap so a wedged Gradle can't hang the app forever. Generous enough for the
-        // one-time first-run NeoForge download; a genuine hang (normal builds are ~10s) is caught.
-        let output = amc_core::output_with_timeout(command, std::time::Duration::from_secs(300))
-            .map_err(|e| {
-                let msg = if e.kind() == std::io::ErrorKind::TimedOut {
-                    "the mod build timed out (over 5 minutes) — the toolchain may be stuck; try again"
-                        .to_string()
-                } else {
-                    format!("failed to launch Gradle wrapper `{program}`: {e}")
-                };
-                AmcError::validation(Component::BuildManager, msg)
-            })?;
-
-        let mut log = String::from_utf8_lossy(&output.stdout).into_owned();
-        log.push_str(&String::from_utf8_lossy(&output.stderr));
-        let outcome = classify(&log);
+        // A first build downloads Minecraft and the loader; a dropped connection there would otherwise
+        // fail the whole create. Retry only that kind of failure, keeping each attempt's log.
+        let mut log = String::new();
+        let mut outcome = BuildOutcome::Unknown;
+        for attempt in 1..=DOWNLOAD_ATTEMPTS {
+            if attempt > 1 {
+                let note =
+                    format!("{DOWNLOAD_RETRY_MARKER} (attempt {attempt} of {DOWNLOAD_ATTEMPTS})\n");
+                eprint!("{note}");
+                log.push_str(&note);
+                std::thread::sleep(download_retry_delay(attempt));
+            }
+            let mut command = Command::new(&program);
+            command.args(&args).current_dir(project_root);
+            hide_console(&mut command);
+            // Hard 5-minute cap so a wedged Gradle can't hang the app forever. Generous enough for the
+            // one-time first-run NeoForge download; a genuine hang (normal builds are ~10s) is caught.
+            let output = amc_core::output_with_timeout(command, std::time::Duration::from_secs(300))
+                .map_err(|e| {
+                    let msg = if e.kind() == std::io::ErrorKind::TimedOut {
+                        "the mod build timed out (over 5 minutes) — the toolchain may be stuck; try again"
+                            .to_string()
+                    } else {
+                        format!("failed to launch Gradle wrapper `{program}`: {e}")
+                    };
+                    AmcError::validation(Component::BuildManager, msg)
+                })?;
+            let mut attempt_log = String::from_utf8_lossy(&output.stdout).into_owned();
+            attempt_log.push_str(&String::from_utf8_lossy(&output.stderr));
+            log.push_str(&attempt_log);
+            // Classify only the last attempt, so an earlier attempt's download error can't mask what
+            // actually happened in the final one.
+            outcome = classify(&attempt_log);
+            if !is_transient_download_failure(&attempt_log) {
+                break;
+            }
+            if attempt == DOWNLOAD_ATTEMPTS {
+                log.push_str(&format!("\n{DOWNLOAD_GAVE_UP_MARKER}\n"));
+            }
+        }
 
         // Surface the produced artifact on success so the caller can record/launch it.
         let (jar_path, artifact_checksum) = if outcome.is_success() {
@@ -286,5 +310,28 @@ mod tests {
         let dir = std::env::temp_dir().join("amc-build-nonexistent-xyz");
         let err = GradleBuildManager.build(&dir).unwrap_err();
         assert_eq!(err.owner(), Some(Component::BuildManager));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn build_retries_a_download_hiccup_then_classifies_the_last_attempt() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("amc-build-retry-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        // First run: a mirror's 503. Second run: a real compile error, which must not be retried.
+        let script = "#!/bin/sh\nR=\"$(dirname \"$0\")/runs\"; echo run >> \"$R\"\n\
+            if [ \"$(wc -l < \"$R\")\" -lt 2 ]; then\n\
+            echo \"Could not GET 'https://x/y.pom'. Received status code 503 from server\"; echo 'BUILD FAILED'; exit 1\nfi\n\
+            echo 'A.java:1: error: oops'; echo '> Task :compileJava FAILED'; echo 'BUILD FAILED'; exit 1\n";
+        let gradlew = dir.join("gradlew");
+        std::fs::write(&gradlew, script).unwrap();
+        std::fs::set_permissions(&gradlew, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let res = GradleBuildManager.build(&dir).unwrap();
+        let runs = std::fs::read_to_string(dir.join("runs")).unwrap();
+        assert_eq!(runs.lines().count(), 2);
+        assert_eq!(res.outcome, BuildOutcome::CompileError);
+        assert!(res.log.contains(DOWNLOAD_RETRY_MARKER));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

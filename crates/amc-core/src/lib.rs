@@ -18,4 +18,7 @@ pub use error::{AmcError, Component, Result};
 pub use hash::{canonical_hash, sha256_hex, to_hex};
 pub use id::new_id;
 pub use log::init_logging;
-pub use proc::{gradle_wrapper, hide_console, output_with_timeout};
+pub use proc::{
+    download_retry_delay, gradle_wrapper, hide_console, is_transient_download_failure,
+    output_with_timeout, DOWNLOAD_ATTEMPTS, DOWNLOAD_GAVE_UP_MARKER, DOWNLOAD_RETRY_MARKER,
+};

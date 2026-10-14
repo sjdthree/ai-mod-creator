@@ -11,6 +11,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use serde_json::{json, Value};
+use tauri::Emitter;
 use tauri_plugin_dialog::DialogExt;
 
 /// Suppress the console window Windows pops up when this GUI app spawns a console subprocess (the
@@ -1006,16 +1007,22 @@ async fn export(project: String, to: Option<String>) -> Result<Value, String> {
 /// bug. So we watch the process until it either reaches the ready marker (→ launched, leave it running
 /// for the session) or exits early with an error (→ surface the log tail). Off-thread so the UI stays live.
 #[tauri::command]
-async fn play(project: String) -> Result<Value, String> {
+async fn play(app: tauri::AppHandle, project: String) -> Result<Value, String> {
     let proj = resolve_project(&project);
     let endpoint = intent_endpoint();
     let jh = java_home();
     let bin = amc_bin();
     eprintln!("[amc-desktop] play: {proj}");
-    tauri::async_runtime::spawn_blocking(move || play_watch(bin, proj, endpoint, jh))
+    tauri::async_runtime::spawn_blocking(move || play_watch(app, bin, proj, endpoint, jh))
         .await
         .map_err(|e| e.to_string())?
 }
+
+/// The lines `amc play` prints when a download fails on a network hiccup and it tries again, and when
+/// it gives up, and how many tries it makes. Must match the same-named constants in `amc-core`.
+const DOWNLOAD_RETRY_MARKER: &str = "[amc] download problem, retrying";
+const DOWNLOAD_GAVE_UP_MARKER: &str = "[amc] download problem persisted";
+const DOWNLOAD_ATTEMPTS: usize = 3;
 
 /// Is this a Windows Remote Desktop session? (`SESSIONNAME` is `RDP-Tcp#N` there, `Console` locally.)
 fn remote_desktop_session() -> bool {
@@ -1024,6 +1031,7 @@ fn remote_desktop_session() -> bool {
 }
 
 fn play_watch(
+    app: tauri::AppHandle,
     bin: String,
     proj: String,
     endpoint: String,
@@ -1061,12 +1069,22 @@ fn play_watch(
     // The client logs this right before creating its window; if nothing follows, the window never came up.
     const PRE_WINDOW: &str = "Backend library: LWJGL";
     let started = Instant::now();
-    let deadline = started + Duration::from_secs(300);
+    let mut deadline = started + Duration::from_secs(300);
     let mut pre_window_at: Option<Instant> = None;
+    let mut retries_seen = 0;
     loop {
         if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
             if status.success() {
                 return Ok(json!({ "status": "launched", "detail": "the sandbox client closed" }));
+            }
+            let text = std::fs::read_to_string(&log).unwrap_or_default();
+            if text.contains(DOWNLOAD_GAVE_UP_MARKER) {
+                return Err(format!(
+                    "the sandbox couldn't download what it needs — it tried {DOWNLOAD_ATTEMPTS} times. \
+                     Check your internet connection and try Quick Test again.\n\n{}\n\n(Full log: {})",
+                    log_tail(&log),
+                    log.display()
+                ));
             }
             let tail = log_tail(&log);
             return Err(format!(
@@ -1077,6 +1095,19 @@ fn play_watch(
         if let Ok(text) = std::fs::read_to_string(&log) {
             if READY.iter().any(|m| text.contains(m)) {
                 return Ok(json!({ "status": "launched" })); // up and running — leave it for the session
+            }
+            // The engine is retrying a failed download: tell the UI, and give the new attempt its own
+            // full deadline rather than what's left of the old one.
+            let retries = text.matches(DOWNLOAD_RETRY_MARKER).count();
+            if retries > retries_seen {
+                retries_seen = retries;
+                deadline = Instant::now() + Duration::from_secs(300);
+                let _ = app.emit(
+                    "play-progress",
+                    json!({ "retry": retries, "message": format!(
+                        "a download failed (network hiccup) — trying again, attempt {} of {DOWNLOAD_ATTEMPTS}",
+                        retries + 1) }),
+                );
             }
             if pre_window_at.is_none() && text.contains(PRE_WINDOW) {
                 pre_window_at = Some(Instant::now());
