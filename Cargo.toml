@@ -24,7 +24,7 @@ ulid = "1"
 png = "0.17"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 anyhow = "1"
-ureq = "2"
+ureq = "3"
 
 # internal crates
 amc-core = { path = "crates/amc-core" }
