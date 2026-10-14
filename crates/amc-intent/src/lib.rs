@@ -1256,8 +1256,7 @@ mod tests {
     fn contract_is_the_trained_bytes() {
         // Pinned to the sha256 of the exact prompt the promoted model was fine-tuned with. If this
         // fails, contract/contract.txt drifted from training — retrain or restore, do not just bump.
-        use sha2::{Digest, Sha256};
-        let hex = format!("{:x}", Sha256::digest(CONTRACT.as_bytes()));
+        let hex = amc_core::sha256_hex(CONTRACT.as_bytes());
         assert_eq!(
             hex, "133e1c328a379d16df1e97cb2ce60b19949ccdec21b04beb4a2a5f1d9d9678ba",
             "CONTRACT bytes changed — model must be retrained against the new prompt"

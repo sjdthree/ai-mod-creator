@@ -7,7 +7,7 @@
 use std::sync::OnceLock;
 
 use amc_core::{AmcError, Component};
-use jsonschema::JSONSchema;
+use jsonschema::Validator;
 use serde_json::Value;
 
 /// The MCL schema version these schemas define.
@@ -36,13 +36,13 @@ const TRANSACTION_SRC: &str = include_str!("../../../schemas/0.1.0/transaction.s
 
 /// A compiled set of every MCL schema.
 pub struct Schemas {
-    envelope: JSONSchema,
-    operation: JSONSchema,
-    concept: JSONSchema,
-    recipe: JSONSchema,
-    appearance: JSONSchema,
-    behavior: JSONSchema,
-    transaction: JSONSchema,
+    envelope: Validator,
+    operation: Validator,
+    concept: Validator,
+    recipe: Validator,
+    appearance: Validator,
+    behavior: Validator,
+    transaction: Validator,
 }
 
 impl Schemas {
@@ -60,7 +60,7 @@ impl Schemas {
         })
     }
 
-    fn validator(&self, doc_type: DocumentType) -> &JSONSchema {
+    fn validator(&self, doc_type: DocumentType) -> &Validator {
         match doc_type {
             DocumentType::Envelope => &self.envelope,
             DocumentType::Operation => &self.operation,
@@ -73,11 +73,11 @@ impl Schemas {
     }
 }
 
-fn compile(name: &str, src: &str) -> Result<JSONSchema, String> {
+fn compile(name: &str, src: &str) -> Result<Validator, String> {
     let schema: Value =
         serde_json::from_str(src).map_err(|e| format!("{name} schema is not valid JSON: {e}"))?;
     // Draft is auto-detected from the schema's `$schema` (draft 2020-12).
-    JSONSchema::compile(&schema).map_err(|e| format!("{name} schema failed to compile: {e}"))
+    jsonschema::validator_for(&schema).map_err(|e| format!("{name} schema failed to compile: {e}"))
 }
 
 /// The process-wide compiled schema set, initialized on first use.
@@ -92,14 +92,14 @@ fn schemas() -> &'static Schemas {
 /// carrying every validation message (`SPEC-004 §33`).
 pub fn validate(doc_type: DocumentType, instance: &Value) -> Result<(), AmcError> {
     let validator = schemas().validator(doc_type);
-    match validator.validate(instance) {
-        Ok(()) => Ok(()),
-        Err(errors) => {
-            let messages: Vec<String> = errors
-                .map(|e| format!("{} (at {})", e, e.instance_path))
-                .collect();
-            Err(AmcError::validation(Component::Schema, messages.join("; ")))
-        }
+    let messages: Vec<String> = validator
+        .iter_errors(instance)
+        .map(|e| format!("{} (at {})", e, e.instance_path()))
+        .collect();
+    if messages.is_empty() {
+        Ok(())
+    } else {
+        Err(AmcError::validation(Component::Schema, messages.join("; ")))
     }
 }
 
