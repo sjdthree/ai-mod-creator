@@ -18,7 +18,7 @@ thiserror = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive"] }
-jsonschema = "0.18"
+jsonschema = "0.58"
 sha2 = "0.10"
 ulid = "1"
 png = "0.17"
