@@ -20,7 +20,7 @@ use amc_build::{BuildManager, GradleBuildManager};
 use amc_generator::{generator_for, Loader};
 use amc_intent::{HttpIntentAdapter, IntentAdapter, ModelManifest, MANIFEST_FILE};
 use amc_launch::{GradleLauncher, Launcher};
-use amc_state::CanonicalState;
+use amc_state::{CanonicalState, Concept};
 use clap::{Parser, Subcommand};
 use serde_json::{json, Value};
 
@@ -543,6 +543,54 @@ fn action_verb(ops: &[Value]) -> &'static str {
     }
 }
 
+/// A creation as `amc list --json` (and a request's `item`) describes it.
+fn item_json(c: &Concept) -> Value {
+    json!({
+        "name": c.display_name,
+        "type": format!("{:?}", c.concept_type).to_lowercase(),
+        "subtype": c.subtype,
+        "properties": c.properties,
+    })
+}
+
+/// The creation a committed request created, changed or deleted (the first such operation), looked
+/// up in the state after the change, or before it for a delete. `None` for a recipe-only change.
+fn touched_item(ops: &[Value], before: &CanonicalState, after: &CanonicalState) -> Option<Value> {
+    ops.iter().find_map(|op| {
+        let payload = op.get("payload")?;
+        let concept = match op.get("operation")?.as_str()? {
+            "create_concept" => {
+                let name = payload.get("display_name")?.as_str()?;
+                after.active_concepts().find(|c| c.display_name == name)
+            }
+            "update_concept" => after
+                .concepts
+                .get(&target_id(payload.get("target")?, before)?),
+            "delete_concept" => before
+                .concepts
+                .get(&target_id(payload.get("target")?, before)?),
+            _ => None,
+        }?;
+        Some(item_json(concept))
+    })
+}
+
+/// The concept id an operation's `target` reference points at in `state`.
+fn target_id(target: &Value, state: &CanonicalState) -> Option<String> {
+    let value = target.get("value")?.as_str()?;
+    match target.get("reference_type")?.as_str()? {
+        "concept_id" => state
+            .concepts
+            .contains_key(value)
+            .then(|| value.to_string()),
+        "display_name" => state
+            .active_concepts()
+            .find(|c| c.display_name.eq_ignore_ascii_case(value))
+            .map(|c| c.concept_id.clone()),
+        _ => None,
+    }
+}
+
 fn run_request(
     as_json: bool,
     text: &str,
@@ -698,6 +746,7 @@ fn run_request(
             }),
         );
     }
+    let before = sm.canonical().clone();
     if let Err(e) = sm.commit(&tx.transaction_id, true) {
         return fail(as_json, "request", format!("commit failed: {e}"));
     }
@@ -706,6 +755,7 @@ fn run_request(
     }
 
     let action = action_verb(&tx.operations);
+    let item = touched_item(&tx.operations, &before, sm.canonical());
     finish(
         as_json,
         "request",
@@ -717,6 +767,9 @@ fn run_request(
             "action": action,
             // A convenience flag the desktop banner reads: anything that isn't a fresh create.
             "updated": action != "created",
+            // The creation this changed, as `amc list` shows it. An update's operation only carries
+            // the concept id, so without this the desktop had to guess the name from the request text.
+            "item": item,
             "jar": build.jar_path,
             "checksum": build.artifact_checksum,
             "gametests_passed": verify_summary.as_ref().map(|r| r.passed),
@@ -931,18 +984,7 @@ fn run_list(as_json: bool, project: &Path) -> ExitCode {
         Ok(sm) => sm,
         Err(e) => return fail(as_json, "list", e),
     };
-    let items: Vec<Value> = sm
-        .canonical()
-        .active_concepts()
-        .map(|c| {
-            json!({
-                "name": c.display_name,
-                "type": format!("{:?}", c.concept_type).to_lowercase(),
-                "subtype": c.subtype,
-                "properties": c.properties,
-            })
-        })
-        .collect();
+    let items: Vec<Value> = sm.canonical().active_concepts().map(item_json).collect();
     if as_json {
         println!("{}", serde_json::to_string(&items).unwrap());
     } else if items.is_empty() {
@@ -1200,6 +1242,65 @@ fn run_validate(input: &str) -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn state_with(concepts: &[(&str, &str, &str)]) -> CanonicalState {
+        let mut s = CanonicalState::new("t", "amc_t");
+        for (id, name, ty) in concepts {
+            let c: Concept = serde_json::from_value(json!({
+                "concept_id": id, "namespace_id": format!("amc_t:{id}"), "concept_type": ty,
+                "display_name": name, "properties": {}, "status": "active",
+            }))
+            .unwrap();
+            s.concepts.insert(id.to_string(), c);
+        }
+        s
+    }
+
+    #[test]
+    fn touched_item_names_an_update_by_concept_id() {
+        // A create that collided on an existing name is turned into this: only the id, no name.
+        let s = state_with(&[("concept-1", "Spiced Pumpkin Tart", "food")]);
+        let ops = [json!({"operation": "update_concept", "payload": {
+            "target": {"reference_type": "concept_id", "value": "concept-1"},
+            "changes": {"properties": {"nutrition": 9}}}})];
+        let item = touched_item(&ops, &s, &s).unwrap();
+        assert_eq!(item["name"], "Spiced Pumpkin Tart");
+        assert_eq!(item["type"], "food");
+    }
+
+    #[test]
+    fn touched_item_reports_the_new_name_after_a_rename_and_the_old_one_for_a_delete() {
+        let before = state_with(&[("concept-1", "Sting", "weapon")]);
+        let after = state_with(&[("concept-1", "Zephyr", "weapon")]);
+        let target = json!({"reference_type": "display_name", "value": "sting"});
+        let rename = [json!({"operation": "update_concept",
+            "payload": {"target": target, "changes": {"display_name": "Zephyr"}}})];
+        assert_eq!(
+            touched_item(&rename, &before, &after).unwrap()["name"],
+            "Zephyr"
+        );
+        let delete = [json!({"operation": "delete_concept", "payload": {"target": target}})];
+        let empty = state_with(&[]);
+        assert_eq!(
+            touched_item(&delete, &before, &empty).unwrap()["name"],
+            "Sting"
+        );
+    }
+
+    #[test]
+    fn touched_item_finds_a_create_by_name() {
+        let after = state_with(&[("concept-9", "Ruby Blade", "weapon")]);
+        let ops = [json!({"operation": "create_concept",
+            "payload": {"display_name": "Ruby Blade", "concept_type": "weapon"}})];
+        let item = touched_item(&ops, &state_with(&[]), &after).unwrap();
+        assert_eq!(item["name"], "Ruby Blade");
+        assert!(touched_item(
+            &[json!({"operation": "create_recipe", "payload": {}})],
+            &after,
+            &after
+        )
+        .is_none());
+    }
 
     #[test]
     fn normalize_capitalizes_names_after_called_or_named() {

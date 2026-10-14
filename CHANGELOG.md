@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+- **Fix: re-making something you already have showed the wrong name and then lost its card.**
+  Asking for a creation that already exists (say, tapping the pumpkin tart example twice) updates
+  the existing one, but the engine's reply only identified it by an internal id. The app fell back to
+  a guess like "your tart", couldn't find that in the sidebar, and cleared the card with "no longer in
+  your project" at the next refresh (such as pressing Quick Test). `amc request --json` now includes
+  the creation it created, changed or deleted as `item`, and the app only tracks names that are in
+  the sidebar.
 ## [0.3.0-alpha.4] — 2026-10-14
 
 - **Quick Test and builds retry a failed download.** The first Quick Test (and the first build)
