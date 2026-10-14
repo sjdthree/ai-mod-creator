@@ -242,6 +242,44 @@ fn main() -> ExitCode {
         Ok(l) => l,
         Err(e) => return fail(as_json, "loader", e.to_string()),
     };
+    // Commands that change a project (its state or its generated `mod/` build) hold its lock for their
+    // whole run, so a second one can't overwrite their result. Read-only commands don't take it.
+    let changes_project = match &cli.command {
+        Command::Request { project, .. }
+        | Command::Test { project }
+        | Command::Play { project, .. }
+        | Command::Revert { project, .. }
+        | Command::Undo { project } => Some(project),
+        _ => None,
+    };
+    let _lock = match changes_project.filter(|p| project::is_initialized(p)) {
+        Some(project) => match project::lock(project) {
+            Ok(lock) => Some(lock),
+            Err(project::LockError::Busy) => {
+                return finish(
+                    as_json,
+                    command_name(&cli.command),
+                    false,
+                    json!({
+                        "status": "project_busy",
+                        "message": format!(
+                            "{} is busy with another change or an open Quick Test; wait for it to \
+                             finish (or close the sandbox Minecraft), then try again",
+                            project.display()
+                        ),
+                    }),
+                );
+            }
+            Err(project::LockError::Io(e)) => {
+                return fail(
+                    as_json,
+                    command_name(&cli.command),
+                    format!("couldn't lock the project: {e}"),
+                )
+            }
+        },
+        None => None,
+    };
     match &cli.command {
         Command::Validate { input } => run_validate(input),
         Command::Bench {
@@ -286,6 +324,23 @@ fn main() -> ExitCode {
         Command::List { project } => run_list(as_json, project),
         Command::Export { project, to } => run_export(as_json, project, to.as_deref()),
         Command::Model { action } => run_model(as_json, action),
+    }
+}
+
+/// The subcommand's name as typed, for error payloads.
+fn command_name(command: &Command) -> &'static str {
+    match command {
+        Command::Init { .. } => "init",
+        Command::Request { .. } => "request",
+        Command::Test { .. } => "test",
+        Command::Play { .. } => "play",
+        Command::Revert { .. } => "revert",
+        Command::Undo { .. } => "undo",
+        Command::List { .. } => "list",
+        Command::Export { .. } => "export",
+        Command::Validate { .. } => "validate",
+        Command::Bench { .. } => "bench",
+        Command::Model { .. } => "model",
     }
 }
 
@@ -768,10 +823,8 @@ fn run_play(as_json: bool, project: &Path, interactive: bool, loader: Loader) ->
     if !as_json && use_interactive {
         // The #1 gotcha: creative tabs (and thus your items) only exist in Creative mode; a new
         // world defaults to Survival. Tell the player exactly how to see their creation.
-        println!("launching client… once in-world, press T and run:  /gamemode creative");
-        println!(
-            "then press E → the Combat/Tools/Building-Blocks tab (or search) to find your items."
-        );
+        println!("launching client… create or open a world (you join in Creative), then press E:");
+        println!("your items are at the end of their creative tab, or search for them by name.");
     }
     // The project must have been built+verified by a prior `request`/`test`; the gradlew wrapper's
     // presence is our proxy for "was built", and the launcher refuses unverified work.

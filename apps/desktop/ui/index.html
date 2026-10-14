@@ -454,6 +454,7 @@ async function switchProject(){
     return;
   }
   current.project = sel.value;
+  current.shownItem = null; $("#result").hidden = true; $("#run").hidden = true;
   clearRefine();
   await refreshItems();
 }
@@ -463,6 +464,13 @@ async function refreshItems(){
   $("#count").textContent = ITEMS.length;
   const list = $("#itemlist");
   if (current.refine && !ITEMS.some(i=>i.name===current.refine)) clearRefine();
+  // The result card names a creation from an earlier run. If the saved project no longer has it (an
+  // undo, or another amc process changed the project), drop the card rather than contradict the list.
+  if (current.shownItem && !ITEMS.some(i=>i.name===current.shownItem)){
+    toast(`“${current.shownItem}” is no longer in ${current.project}, so I've cleared its result card.`, "warn", 9000);
+    current.shownItem = null;
+    $("#result").hidden = true; $("#run").hidden = true;
+  }
   if (!ITEMS.length){ list.innerHTML = `<div class="empty">No creations yet.<br>Describe one above.</div>`; }
   else list.innerHTML = ITEMS.map((it,i)=>`
     <div class="card ${current.refine===it.name?"selected":""}" data-name="${esc(it.name)}" title="Click to refine">
@@ -590,11 +598,12 @@ async function handleResult(states, res, prov){
       isCreate ? "verified ✓" : `${action} ✓`, "ok");
     if (!isCreate && it.name) selectRefine(it.name);
     flashCard(it.name);
+    current.shownItem = it.name;
     $("#req").value = "";
     return;
   }
   // Non-success: never freeze — say plainly what happened, why, and what to do next.
-  const soft = ["needs_clarification","unsupported","no_op","rejected"].includes(res.status);
+  const soft = ["needs_clarification","unsupported","no_op","rejected","project_busy"].includes(res.status);
   const running = STAGE_KEYS.find(k=>states[k]==="active");
   if (running){ states[running] = soft ? "idle" : "fail"; renderPipe(states, prov.name); }
   setRunHeadTitle("gem", 200, soft ? `Let's tweak “${prov.name}”` : `Couldn't finish ${prov.name}`);
@@ -614,6 +623,8 @@ async function handleResult(states, res, prov){
       `I couldn't turn “${prov.name}” into a creation. Give it a Capitalized name and a number or two — e.g. “a ruby sword called Sting with 9 attack damage” — or just tap Try again.`],
     unsupported: ["That's not supported yet",
       `Right now AI-mod creator can make ${SUPPORTED} — but not ${res.reason && /entit|mob/i.test(res.reason) ? "mobs or entities" : "that"} yet. Try one of the supported kinds instead.`],
+    project_busy: ["This project is busy",
+      `Another change or an open Quick Test is using “${current.project}” right now, so nothing was changed. Close the sandbox Minecraft or wait for the other change to finish, then tap Try again.`],
     no_op: ["Nothing to change",
       `That request doesn't change anything in “${current.project}”. Describe what you'd like different — e.g. “make ${prov.name} do 12 damage”.`],
     rejected: isDup
@@ -632,7 +643,8 @@ async function handleResult(states, res, prov){
       ? ["The AI model had trouble with that", `It couldn't read that into a clean creation. Try rephrasing more simply, or tap Try again — it's often a one-off.`]
       : ["Something went wrong", res.message || String(res.status||"unknown")]
   );
-  showBanner("gem", 200, title, desc, soft ? "needs detail" : "not saved", soft ? "warn" : "bad");
+  const badge = res.status === "project_busy" ? "busy" : soft ? "needs detail" : "not saved";
+  showBanner("gem", 200, title, desc, badge, soft ? "warn" : "bad");
   // Also toast it — the banner alone was too easy to miss, which made a real, explained rejection read
   // as "nothing happened". Now every non-success shouts the reason.
   toast(`${title} — ${desc}`, soft ? "warn" : "bad", 9000);
@@ -656,7 +668,8 @@ async function handleResult(states, res, prov){
     upBtn.hidden = true; if (retry) retry.hidden = false;
   }
   // Offer concrete close alternatives the engine CAN make — so a dead end becomes a pick-one-of-these.
-  renderSuggestions(current.lastText || prov.name, res.status);
+  if (res.status === "project_busy") $("#failsuggest").hidden = true;
+  else renderSuggestions(current.lastText || prov.name, res.status);
 }
 // The kinds AI-mod creator can actually build, and the words we strip to find the "theme" (material/adjective).
 const MAKEABLE = ["sword","pickaxe","axe","shovel","hoe","block"];
@@ -734,7 +747,7 @@ async function doCreate(){
   const prov = current.refine
     ? { name: current.refine, type: (ITEMS.find(x=>x.name===current.refine)||{}).type || "item" }
     : inferCreation(text);
-  $("#run").hidden = false; $("#result").hidden = true;
+  $("#run").hidden = false; $("#result").hidden = true; current.shownItem = null;
   setRunHead(kindOf(prov.type), seedOf(prov.name),
     current.refine ? `Refining ${prov.name}` : `Creating ${prov.name}`, `“${text}”`);
   const states = {}; renderPipe(states, prov.name);
@@ -777,6 +790,7 @@ let playing = false;
 async function doPlay(){
   // Quick test: an isolated NeoForge sandbox client (doesn't touch your real Minecraft/worlds).
   if (playing){ toast("The sandbox is already starting — give it a moment."); return; }
+  if (current.busy){ toast("Still building your last request — Quick Test will include it once it's done."); return; }
   await refreshItems();
   const names = ITEMS.map(x=>x.name).filter(Boolean);
   if (!names.length){
