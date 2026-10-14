@@ -5,7 +5,8 @@
 #   binaries/llama-server-<triple>   — the model runtime (sidecar; static llama.cpp build)
 #   resources/models/<name>/         — the model pinned in model.lock: amc-model.json + GGUF (+ optional MLX adapter/)
 #   resources/amc-ops.gbnf           — the JSON grammar (engine-owned; the manifest pins its hash)
-#   resources/licenses/              — third-party notices (incl. the Gemma notice for the weights)
+#   resources/licenses/              — third-party notices (incl. the Gemma notice for the weights and
+#                                      the Rust crate licenses, generated with cargo-about)
 #
 # The model comes from Hugging Face (scripts/fetch_model.sh → models/<name>); set
 # AMC_MODEL_DIR to stage a different build, AMC_ADAPTER_DIR to include the MLX fallback adapter.
@@ -53,5 +54,11 @@ cp "$REPO/crates/amc-intent/contract/amc-ops.gbnf" resources/
 echo "==> license notices"
 cp "$REPO/LICENSE" "$REPO/NOTICE" resources/licenses/
 cp "$REPO"/apps/desktop/licenses/* resources/licenses/
+command -v cargo-about >/dev/null \
+  || { echo "ERROR: cargo-about is required (cargo install cargo-about --locked --features cli)"; exit 1; }
+cargo about generate -c ../about.toml --manifest-path Cargo.toml \
+  -o resources/licenses/THIRD_PARTY_LICENSES.html ../about.hbs
+cargo about generate -c ../about.toml --manifest-path "$REPO/Cargo.toml" --workspace \
+  -o resources/licenses/THIRD_PARTY_LICENSES-engine.html ../about.hbs
 
 echo "staged for triple $TRIPLE. Next: cd apps/desktop/src-tauri && cargo tauri build --bundles app"

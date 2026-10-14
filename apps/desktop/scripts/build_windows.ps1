@@ -84,6 +84,15 @@ Write-Host "== [4/5] staging grammar + license notices =="
 Copy-Item (Join-Path $repo "crates\amc-intent\contract\amc-ops.gbnf") (Join-Path $tauri "resources\amc-ops.gbnf") -Force
 Copy-Item (Join-Path $repo "LICENSE"),(Join-Path $repo "NOTICE") $resLic -Force
 Copy-Item (Join-Path $repo "apps\desktop\licenses\*") $resLic -Force
+if (-not (Get-Command cargo-about -ErrorAction SilentlyContinue)) {
+    throw "cargo-about is required (cargo install cargo-about --locked --features cli)"
+}
+$aboutCfg = Join-Path $repo "apps\desktop\about.toml"
+$aboutTpl = Join-Path $repo "apps\desktop\about.hbs"
+cargo about generate -c $aboutCfg --manifest-path (Join-Path $tauri "Cargo.toml") -o (Join-Path $resLic "THIRD_PARTY_LICENSES.html") $aboutTpl
+if ($LASTEXITCODE -ne 0) { throw "cargo about failed (desktop app)" }
+cargo about generate -c $aboutCfg --manifest-path (Join-Path $repo "Cargo.toml") --workspace -o (Join-Path $resLic "THIRD_PARTY_LICENSES-engine.html") $aboutTpl
+if ($LASTEXITCODE -ne 0) { throw "cargo about failed (engine)" }
 
 # 5) bundle the installer
 Write-Host "== [5/5] cargo tauri build (msi + nsis) =="
