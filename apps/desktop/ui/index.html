@@ -607,7 +607,8 @@ async function handleResult(states, res, prov){
       isCreate ? "verified ✓" : `${action} ✓`, "ok");
     if (!isCreate && it.name) selectRefine(it.name);
     flashCard(it.name);
-    current.shownItem = it.name;
+    // Only track a name the sidebar really has; a guessed one would later be "no longer in" the project.
+    current.shownItem = ITEMS.some(x=>x.name===it.name) ? it.name : null;
     $("#req").value = "";
     return;
   }
