@@ -5,4 +5,6 @@ Third-party notices bundled with the desktop app.
   GEMMA_TERMS_OF_USE.txt     — copy of the Gemma Terms of Use (fetched from ai.google.dev/gemma/terms;
                                re-fetch when Google updates them)
   LLAMA_CPP_LICENSE.txt      — the bundled llama-server (MIT)
-  THIRD_PARTY_LICENSES.html  — Rust crate licenses (generated: cargo about generate about.hbs)
+  THIRD_PARTY_LICENSES.html  — Rust crate licenses in the desktop app (generated at staging time
+                               by cargo-about from apps/desktop/about.toml + about.hbs)
+  THIRD_PARTY_LICENSES-engine.html — the same for the bundled amc engine

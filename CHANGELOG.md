@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+- **Fix: the installers didn't include the Rust crate license notices** that NOTICE promised. The
+  bundle scripts now generate `THIRD_PARTY_LICENSES.html` (desktop app) and
+  `THIRD_PARTY_LICENSES-engine.html` (engine) with cargo-about, so packaging needs
+  `cargo install cargo-about --locked --features cli`.
 - **Fix: a change could be silently lost.** Two `amc` processes working on the same project (the app
   and the CLI, or two app windows) could both load it, and the one that saved last dropped the other's
   creation, even though both reported success. Commands that change a project now hold an exclusive
