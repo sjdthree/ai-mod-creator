@@ -32,7 +32,7 @@ body:
     id: version
     attributes:
       label: App version
-      description: From the release you downloaded, e.g. 0.3.0-alpha.3. Write "source" plus the commit if you built it yourself.
+      description: From the release you downloaded, e.g. 0.3.0-alpha.4. Write "source" plus the commit if you built it yourself.
     validations:
       required: true
   - type: dropdown

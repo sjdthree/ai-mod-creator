@@ -13,8 +13,8 @@ Both run the same engine.
 | Requirement | Why | Notes |
 |---|---|---|
 | **macOS, Linux, or Windows** | host OS | The visible Minecraft client runs best on a desktop OS. macOS Apple-Silicon is the primary tested target. |
-| **JDK 21 (Temurin)** | builds the mod against NeoForge 1.21.1 | macOS: AMC auto-detects `/Library/Java/JavaVirtualMachines/temurin-21.jdk`. Otherwise set `JAVA_HOME`. |
-| **Rust (stable)** | builds the engine | [rustup.rs](https://rustup.rs) |
+| **JDK 21 (Temurin)** | builds the mod for Minecraft 1.21.1 | macOS: AMC auto-detects `/Library/Java/JavaVirtualMachines/temurin-21.jdk`. Otherwise set `JAVA_HOME`. |
+| **Rust 1.89 or newer** | builds the engine | [rustup.rs](https://rustup.rs) |
 | **The AMC Model** (~0.5 GB) | interprets your English | Our fine-tuned intent model (a Gemma-3-270M base), served locally (below). Runs on a normal laptop. |
 | **~2 GB disk, first run** | NeoForge + Minecraft assets | Downloaded once and cached. |
 
@@ -75,10 +75,8 @@ AMC_BIN="$(git rev-parse --show-toplevel)/target/debug/amc" cargo tauri dev
 A window opens. Type a request, watch it build and verify, then **Play** or **Export**. See the
 [User Guide](USER_GUIDE.md).
 
-Build an installable app (`.app` / `.dmg` / `.msi` / `.AppImage`):
-```bash
-cd apps/desktop/src-tauri && cargo tauri build
-```
+To build a self-contained installer (engine, model runtime and model inside), use the packaging
+scripts described in [apps/desktop/README.md](../apps/desktop/README.md).
 
 ## 4b. …or use the command line
 
@@ -102,8 +100,10 @@ libs). See [`docs/dev-container.md`](dev-container.md). The desktop app uses you
 
 ## Troubleshooting
 
-- **"engine unreachable" / the status dot is grey** — the intent model isn't running. Start it
-  (step 3); the app expects it on `127.0.0.1:8080`.
+- **"engine unreachable" / the status dot is grey** — the intent model isn't running. The desktop app
+  starts its own; check that `models/ai-mod-create-270smol/` exists (`./scripts/fetch_model.sh`) and
+  `llama-server` is on your PATH. The `amc` CLI expects a model you started yourself (step 3) on
+  `127.0.0.1:8080`, or wherever `$AMC_INTENT_ENDPOINT` points.
 - **Build fails with a Java/toolchain error** — you need **JDK 21**. Check `java -version`, or set
   `JAVA_HOME` to a Temurin 21 install.
 - **First `play`/`request` is slow** — the first build downloads NeoForge + Minecraft assets (~2 GB),
