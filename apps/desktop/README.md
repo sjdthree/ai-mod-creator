@@ -56,9 +56,11 @@ Tauri installers are **built on the target OS** — you cannot cross-compile a W
 - **Visual Studio 2022 Build Tools** with the *Desktop development with C++* workload (MSVC + CMake)
 - **Rust** ([rustup.rs](https://rustup.rs) — installs the `x86_64-pc-windows-msvc` target)
 - **Tauri CLI**: `cargo install tauri-cli --version "^2.0" --locked`
+- **cargo-about** (generates the license notices): `cargo install cargo-about --locked --features cli`
 - **Git**; WebView2 Runtime is preinstalled on Windows 11. **No Python needed.**
 
-**Then, from the repo root:**
+**Then, from the repo root,** in a *Developer PowerShell for VS 2022* (x64) so MSVC and CMake are on
+PATH:
 ```powershell
 git pull
 powershell -ExecutionPolicy Bypass -File apps\desktop\scripts\build_windows.ps1
@@ -76,7 +78,8 @@ the installed app still need **JDK 21** (Temurin) for the Gradle build step.
 
 ## Build the macOS app / installer
 ```bash
-# 0) one-time: fetch the AMC Model and build a STATIC llama-server (see below)
+# 0) one-time: fetch the AMC Model, build a STATIC llama-server (see below), and install
+#    cargo-about for the license notices: cargo install cargo-about --locked --features cli
 #    ./scripts/fetch_model.sh                    → models/ai-mod-create-270smol/{amc-model.json,*.gguf}
 #    (static llama-server build → export AMC_LLAMA_SERVER=<path to build/bin/llama-server>)
 
