@@ -9,7 +9,7 @@ your laptop, offline, with a tiny open model.
 ```
 
 <p align="center">
-  <a href="docs/media/demo.mp4"><b>▶ Watch the 8-second demo</b></a>
+  <a href="docs/media/demo.mp4"><img src="docs/images/demo.gif" alt="8-second demo: typing a request, the build checks going green, then the new sword in Minecraft" width="760"></a>
 </p>
 <p align="center">
   <img src="docs/images/app-building.png" alt="The AI-mod creator app building a pickaxe from a one-line request" width="760">
