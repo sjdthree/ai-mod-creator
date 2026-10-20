@@ -9,6 +9,9 @@ your laptop, offline, with a tiny open model.
 ```
 
 <p align="center">
+  <a href="docs/media/demo.mp4"><b>▶ Watch the 8-second demo</b></a>
+</p>
+<p align="center">
   <img src="docs/images/app-building.png" alt="The AI-mod creator app building a pickaxe from a one-line request" width="760">
 </p>
 <p align="center">
