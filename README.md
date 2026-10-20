@@ -11,12 +11,7 @@ your laptop, offline, with a tiny open model.
 <p align="center">
   <a href="docs/media/demo.mp4"><img src="docs/images/demo.gif" alt="8-second demo: typing a request, the build checks going green, then the new sword in Minecraft" width="760"></a>
 </p>
-<p align="center">
-  <img src="docs/images/app-building.png" alt="The AI-mod creator app building a pickaxe from a one-line request" width="760">
-</p>
-<p align="center">
-  <img src="docs/images/in-game-winterbite.png" alt="Winterbite, a sword made from one sentence, in Minecraft's creative inventory with 10 attack damage" width="560">
-</p>
+
 
 **Status: early alpha.** It handles simple items, weapons, tools, food, blocks and recipes, and
 it's happiest with clear, specific requests. Try it in a fresh test world. Bug reports and "I wish
